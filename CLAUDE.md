@@ -3,6 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **Authoritative docs — read before changing code:**
+>
 > - [PROJECT_RULES.md](PROJECT_RULES.md) — engineering rules, coding standards, anti-patterns, architecture (**how to build**).
 > - [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) — functional + non-functional spec (**what to build**).
 > - [docs/design/](docs/design/) — screen-by-screen UI reference (**what it looks like**).
