@@ -1,0 +1,95 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.85rem 1.5rem;
+  background: #ffffff;
+  border: 1px solid #1f2933;
+  border-radius: 4px;
+  margin: 0.75rem;
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  color: #1f2933;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tab {
+  padding: 0.4rem 0.9rem;
+  border-radius: 4px;
+  color: #3e4c59;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.tab:hover {
+  background: #f0f2f5;
+}
+
+.tabActive {
+  background: #e4e7eb;
+  color: #1f2933;
+}
+
+.user {
+  position: relative;
+  margin-left: auto;
+}
+
+.userButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  font: inherit;
+  color: #3e4c59;
+  cursor: pointer;
+  padding: 0.4rem 0.5rem;
+  border-radius: 4px;
+}
+
+.userButton:hover {
+  background: #f0f2f5;
+}
+
+.caret {
+  font-size: 0.7rem;
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 140px;
+  background: #ffffff;
+  border: 1px solid #cbd2d9;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgb(15 23 42 / 0.12);
+  padding: 0.25rem;
+  z-index: 10;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font: inherit;
+  color: #1f2933;
+  padding: 0.5rem 0.6rem;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.menuItem:hover {
+  background: #f0f2f5;
+}

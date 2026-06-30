@@ -1,8 +1,9 @@
 /**
  * Join truthy class names into a single string.
- * Keeps conditional styling readable: cn(styles.card, isActive && styles.active)
+ * Keeps conditional styling readable:
+ *   classNames(styles.card, isActive && styles.active)
  */
-export function cn(
+export function classNames(
   ...values: Array<string | false | null | undefined>
 ): string {
   return values.filter(Boolean).join(' ');

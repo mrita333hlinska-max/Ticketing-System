@@ -50,6 +50,13 @@ links here; read both before making changes.
   identifiers** — e.g. avoid type/variable names like `Comment`, `Event`,
   `Element`, `Document`, `Map`, `Error`; qualify them (`TicketComment`,
   `DomainEvent`). Booleans read as predicates (`isVerified`, `hasTickets`).
+- **No abbreviations or cryptic short names** for things with a clear full name
+  — `classNames` not `cn`, `description` not `desc`. Name array-callback params
+  after the element (`team`, `ticket`), not `t`/`x`.
+  **Accepted conventional short names** (use freely): `i` (loop index), `acc`
+  (reduce accumulator), `err` (caught error), `ctx` (context), single-letter
+  generic type params (`T`, `K`, `V`), and whole well-known acronyms (`id`,
+  `url`, `api`, `http`, `iso`).
 - **Complexity:** keep hot paths (loops, sorts, filters) at **O(n)** / **O(n
   log n)** / **O(1)**; no accidental nested-loop blowups.
 - **Readability over cleverness:** no over-engineering, no unrequested

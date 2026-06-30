@@ -34,7 +34,7 @@ import {
 import type { TicketApi } from './ticketApi';
 
 const VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000; // 24h (§3)
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const STORAGE_KEY = 'ticketing-system:stub:v1';
 
 interface StoredUser extends User {
@@ -77,15 +77,15 @@ const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 /** Dev-only password hash (djb2). Real hashing is backend-side, never here. */
 function hashPassword(password: string): string {
   const hash = Array.from(password).reduce(
-    (acc, ch) => ((acc << 5) + acc + ch.charCodeAt(0)) | 0,
+    (acc, character) => ((acc << 5) + acc + character.charCodeAt(0)) | 0,
     5381,
   );
   return `h${hash >>> 0}`;
 }
 
 function displayNameFromEmail(email: string): string {
-  const local = email.split('@')[0] ?? email;
-  return local.charAt(0).toUpperCase() + local.slice(1);
+  const localPart = email.split('@')[0] ?? email;
+  return localPart.charAt(0).toUpperCase() + localPart.slice(1);
 }
 
 function toPublicUser(user: StoredUser): User {
@@ -139,26 +139,29 @@ export function createStubApi(storage?: Storage): StubApi {
 
   function requireSession(): string {
     const { sessionUserId } = state;
-    if (!sessionUserId || !state.users.some((u) => u.id === sessionUserId)) {
+    if (
+      !sessionUserId ||
+      !state.users.some((user) => user.id === sessionUserId)
+    ) {
       throw new UnauthorizedError();
     }
     return sessionUserId;
   }
 
   function getTeamOrThrow(id: string): Team {
-    const team = state.teams.find((t) => t.id === id);
+    const team = state.teams.find((team) => team.id === id);
     if (!team) throw new NotFoundError('Team not found.');
     return team;
   }
 
   function getEpicOrThrow(id: string): Epic {
-    const epic = state.epics.find((e) => e.id === id);
+    const epic = state.epics.find((epic) => epic.id === id);
     if (!epic) throw new NotFoundError('Epic not found.');
     return epic;
   }
 
   function getTicketOrThrow(id: string): Ticket {
-    const ticket = state.tickets.find((t) => t.id === id);
+    const ticket = state.tickets.find((ticket) => ticket.id === id);
     if (!ticket) throw new NotFoundError('Ticket not found.');
     return ticket;
   }
@@ -172,15 +175,15 @@ export function createStubApi(storage?: Storage): StubApi {
   }
 
   function teamNameTaken(name: string, exceptId?: string): boolean {
-    const lower = name.toLowerCase();
+    const lowerName = name.toLowerCase();
     return state.teams.some(
-      (t) => t.id !== exceptId && t.name.toLowerCase() === lower,
+      (team) => team.id !== exceptId && team.name.toLowerCase() === lowerName,
     );
   }
 
   function issueToken(userId: string): void {
     // Invalidate earlier unused tokens for this user (§3).
-    state.tokens = state.tokens.filter((t) => t.userId !== userId);
+    state.tokens = state.tokens.filter((token) => token.userId !== userId);
     state.tokens.push({
       token: generateId(),
       userId,
@@ -195,22 +198,24 @@ export function createStubApi(storage?: Storage): StubApi {
     },
 
     getVerificationTokenFor(email) {
-      const user = state.users.find((u) => u.email === normalizeEmail(email));
-      const record = user && state.tokens.find((t) => t.userId === user.id);
-      return record ? record.token : null;
+      const normalized = normalizeEmail(email);
+      const user = state.users.find((user) => user.email === normalized);
+      const pending =
+        user && state.tokens.find((token) => token.userId === user.id);
+      return pending ? pending.token : null;
     },
 
     // --- Auth (§3) ---
 
     async signUp({ email, password }) {
       const normalized = normalizeEmail(email);
-      if (!EMAIL_RE.test(normalized)) {
+      if (!EMAIL_PATTERN.test(normalized)) {
         throw new ValidationError('Enter a valid email address.');
       }
       if (password.length < 8) {
         throw new ValidationError('Password must be at least 8 characters.');
       }
-      if (state.users.some((u) => u.email === normalized)) {
+      if (state.users.some((user) => user.email === normalized)) {
         throw new ConflictError('An account with that email already exists.');
       }
 
@@ -229,7 +234,7 @@ export function createStubApi(storage?: Storage): StubApi {
 
     async login({ email, password }) {
       const normalized = normalizeEmail(email);
-      const user = state.users.find((u) => u.email === normalized);
+      const user = state.users.find((user) => user.email === normalized);
       if (!user || user.passwordHash !== hashPassword(password)) {
         throw new UnauthorizedError('Invalid email or password.');
       }
@@ -247,29 +252,33 @@ export function createStubApi(storage?: Storage): StubApi {
     },
 
     async getCurrentUser() {
-      const user = state.users.find((u) => u.id === state.sessionUserId);
+      const user = state.users.find((user) => user.id === state.sessionUserId);
       return user ? toPublicUser(user) : null;
     },
 
     async verifyEmail(token) {
-      const record = state.tokens.find((t) => t.token === token);
-      if (!record || record.expiresAt < Date.now()) {
-        if (record) state.tokens = state.tokens.filter((t) => t !== record);
+      const pending = state.tokens.find((entry) => entry.token === token);
+      if (!pending || pending.expiresAt < Date.now()) {
+        if (pending) {
+          state.tokens = state.tokens.filter((entry) => entry !== pending);
+        }
         save();
         throw new ValidationError(
           'This verification link is invalid or expired.',
         );
       }
-      const user = state.users.find((u) => u.id === record.userId);
+      const user = state.users.find((user) => user.id === pending.userId);
       if (user) user.emailVerified = true;
       // Single-use: drop every token for this user.
-      state.tokens = state.tokens.filter((t) => t.userId !== record.userId);
+      state.tokens = state.tokens.filter(
+        (entry) => entry.userId !== pending.userId,
+      );
       save();
     },
 
     async resendVerification(email) {
       const normalized = normalizeEmail(email);
-      const user = state.users.find((u) => u.email === normalized);
+      const user = state.users.find((user) => user.email === normalized);
       if (!user) throw new NotFoundError('No account found for that email.');
       if (user.emailVerified) {
         throw new ValidationError('This email is already verified.');
@@ -322,14 +331,14 @@ export function createStubApi(storage?: Storage): StubApi {
     async deleteTeam(id) {
       requireSession();
       getTeamOrThrow(id);
-      const hasTickets = state.tickets.some((t) => t.teamId === id);
-      const hasEpics = state.epics.some((e) => e.teamId === id);
+      const hasTickets = state.tickets.some((ticket) => ticket.teamId === id);
+      const hasEpics = state.epics.some((epic) => epic.teamId === id);
       if (hasTickets || hasEpics) {
         throw new ConflictError(
           'Cannot delete a team that still has tickets or epics.',
         );
       }
-      state.teams = state.teams.filter((t) => t.id !== id);
+      state.teams = state.teams.filter((team) => team.id !== id);
       save();
     },
 
@@ -337,7 +346,7 @@ export function createStubApi(storage?: Storage): StubApi {
 
     async getEpics(teamId) {
       requireSession();
-      return state.epics.filter((e) => !teamId || e.teamId === teamId);
+      return state.epics.filter((epic) => !teamId || epic.teamId === teamId);
     },
 
     async createEpic({ teamId, title, description }: CreateEpicInput) {
@@ -372,9 +381,9 @@ export function createStubApi(storage?: Storage): StubApi {
         }
       }
       if (input.description !== undefined) {
-        const next = normalizeDescription(input.description);
-        if (next !== epic.description) {
-          epic.description = next;
+        const nextDescription = normalizeDescription(input.description);
+        if (nextDescription !== epic.description) {
+          epic.description = nextDescription;
           changed = true;
         }
       }
@@ -388,12 +397,12 @@ export function createStubApi(storage?: Storage): StubApi {
     async deleteEpic(id) {
       requireSession();
       getEpicOrThrow(id);
-      if (state.tickets.some((t) => t.epicId === id)) {
+      if (state.tickets.some((ticket) => ticket.epicId === id)) {
         throw new ConflictError(
           'Cannot delete an epic that is still referenced by tickets.',
         );
       }
-      state.epics = state.epics.filter((e) => e.id !== id);
+      state.epics = state.epics.filter((epic) => epic.id !== id);
       save();
     },
 
@@ -401,7 +410,9 @@ export function createStubApi(storage?: Storage): StubApi {
 
     async getTickets(teamId) {
       requireSession();
-      return state.tickets.filter((t) => !teamId || t.teamId === teamId);
+      return state.tickets.filter(
+        (ticket) => !teamId || ticket.teamId === teamId,
+      );
     },
 
     async getTicket(id) {
@@ -464,7 +475,7 @@ export function createStubApi(storage?: Storage): StubApi {
         throw new ValidationError('Body is required.');
       }
 
-      const next: Ticket = {
+      const updatedTicket: Ticket = {
         ...ticket,
         teamId: nextTeamId,
         epicId: nextEpicId,
@@ -475,15 +486,17 @@ export function createStubApi(storage?: Storage): StubApi {
       };
 
       // Bump updatedAt only on a real change (§6).
-      const changed = (Object.keys(next) as Array<keyof Ticket>).some(
-        (key) => next[key] !== ticket[key],
+      const changed = (Object.keys(updatedTicket) as Array<keyof Ticket>).some(
+        (field) => updatedTicket[field] !== ticket[field],
       );
       if (!changed) return ticket;
 
-      next.updatedAt = nowIso();
-      state.tickets = state.tickets.map((t) => (t.id === id ? next : t));
+      updatedTicket.updatedAt = nowIso();
+      state.tickets = state.tickets.map((existing) =>
+        existing.id === id ? updatedTicket : existing,
+      );
       save();
-      return next;
+      return updatedTicket;
     },
 
     async moveTicket(id, to) {
@@ -502,9 +515,11 @@ export function createStubApi(storage?: Storage): StubApi {
     async deleteTicket(id) {
       requireSession();
       getTicketOrThrow(id);
-      state.tickets = state.tickets.filter((t) => t.id !== id);
+      state.tickets = state.tickets.filter((ticket) => ticket.id !== id);
       // Deleting a ticket deletes its comments (§6).
-      state.comments = state.comments.filter((c) => c.ticketId !== id);
+      state.comments = state.comments.filter(
+        (comment) => comment.ticketId !== id,
+      );
       save();
     },
 
@@ -514,8 +529,10 @@ export function createStubApi(storage?: Storage): StubApi {
       requireSession();
       getTicketOrThrow(ticketId);
       return state.comments
-        .filter((c) => c.ticketId === ticketId)
-        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)); // oldest first
+        .filter((comment) => comment.ticketId === ticketId)
+        .sort((first, second) =>
+          first.createdAt.localeCompare(second.createdAt),
+        ); // oldest first
     },
 
     async addComment({ ticketId, body }: CreateCommentInput) {

@@ -122,7 +122,10 @@ export function createHttpAdapter(baseUrl: string = API_BASE_URL): TicketApi {
     // --- Comments ---
     getComments: (ticketId: string): Promise<TicketComment[]> =>
       request('GET', `/tickets/${ticketId}/comments`),
-    addComment: ({ ticketId, body }: CreateCommentInput): Promise<TicketComment> =>
+    addComment: ({
+      ticketId,
+      body,
+    }: CreateCommentInput): Promise<TicketComment> =>
       request('POST', `/tickets/${ticketId}/comments`, { body: { body } }),
   };
 }
