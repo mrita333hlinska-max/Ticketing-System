@@ -1,13 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
+import { useSession } from '@/app/providers/session';
+import { AuthCard, SignUpForm } from '@/features/auth';
 
 export function SignUpPage() {
+  const { status } = useSession();
+  if (status === 'authenticated') return <Navigate to="/board" replace />;
   return (
-    <section>
-      <h1>Create account</h1>
-      <p>The sign-up flow is built in Phase 8.</p>
-      <p>
-        <Link to="/login">Already registered? Log in →</Link>
-      </p>
-    </section>
+    <AuthCard title="Create account" subtitle="Email verification is required.">
+      <SignUpForm />
+    </AuthCard>
   );
 }

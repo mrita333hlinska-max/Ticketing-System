@@ -1,10 +1,6 @@
 /**
- * Provides the current session (authenticated user) to the app.
- *
- * DEV BOOTSTRAP: real auth screens arrive in Phase 8. Until then, in dev builds
- * only, this signs in a throwaway local account so the auth-gated API (every
- * business endpoint, per REQUIREMENTS §3) is usable. This block is removed once
- * the real login flow + HTTP adapter land — it is dev-only scaffolding.
+ * Provides the current session (authenticated user) to the app. On mount it
+ * restores any existing session; the real auth screens (Phase 8) establish one.
  *
  * All API access goes through `sessionService` (PROJECT_RULES §2); this file
  * holds no try/catch around requests.
@@ -12,35 +8,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { LoginInput, SignUpInput, User } from '@/entities/user';
-import { api, type StubApi, type TicketApi } from '@/shared/api';
 import * as sessionService from './sessionService';
 import {
   SessionContext,
   type SessionContextValue,
   type SessionStatus,
 } from './SessionContext';
-
-const DEV_EMAIL = 'dev@local.test';
-const DEV_PASSWORD = 'dev-password';
-
-/** Dev-only: read a pending verification token if the adapter exposes one. */
-function devVerificationToken(client: TicketApi, email: string): string | null {
-  return 'getVerificationTokenFor' in client
-    ? (client as StubApi).getVerificationTokenFor(email)
-    : null;
-}
-
-/** Dev-only: ensure a verified local account exists, then sign in. */
-async function devSignIn(): Promise<User | null> {
-  await sessionService.signUp({ email: DEV_EMAIL, password: DEV_PASSWORD });
-  const token = devVerificationToken(api, DEV_EMAIL);
-  if (token) await sessionService.verifyEmail(token);
-  const result = await sessionService.login({
-    email: DEV_EMAIL,
-    password: DEV_PASSWORD,
-  });
-  return result.ok ? result.value : null;
-}
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -56,16 +29,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     applyUser(result.ok ? result.value : null);
   }, [applyUser]);
 
+  // Restore an existing session on load.
   useEffect(() => {
     let active = true;
-    (async () => {
-      const currentResult = await sessionService.fetchCurrentUser();
-      let current = currentResult.ok ? currentResult.value : null;
-      if (!current && import.meta.env.DEV) {
-        current = await devSignIn();
-      }
-      if (active) applyUser(current);
-    })();
+    sessionService.fetchCurrentUser().then((result) => {
+      if (active) applyUser(result.ok ? result.value : null);
+    });
     return () => {
       active = false;
     };
