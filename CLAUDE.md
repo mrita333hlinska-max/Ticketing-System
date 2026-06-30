@@ -14,10 +14,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project status
 
 The frontend is **scaffolded** (Vite + React + TypeScript) and runs, but is being
-reworked to match the full spec. The placeholder board/state code under `src/`
+reworked to match the full spec. The placeholder board/state code under `FE/src/`
 predates REQUIREMENTS.md — see its **Reconciliation** table for the deltas
 (localStorage → backend API, new states/types, auth, Epics, Comments, no seed
-data). Treat REQUIREMENTS.md as the target, not the current `src/` contents.
+data). Treat REQUIREMENTS.md as the target, not the current `FE/src/` contents.
 
 ## What we're building
 
@@ -27,9 +27,22 @@ Comments, and an email-verified auth flow. The system of record is a **backend
 RDBMS reached over an API** — not browser storage. Full detail in
 [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
 
+## Repository layout
+
+The repo is split into two top-level apps:
+
+- `FE/` — the frontend (Vite + React + TypeScript). All FE tooling, config, and
+  `package.json` live here; run the commands below from inside `FE/`.
+- `BE/` — the backend (API + RDBMS). Not yet scaffolded.
+
+Project-wide files (`README.md`, `CLAUDE.md`, `PROJECT_RULES.md`, `docs/`,
+`LICENSE`) and the shared `.gitignore` stay at the repo root.
+
 ## Commands
 
-- `npm install` — install dependencies (Node ≥ 18.18; see `.nvmrc`).
+Run these from `FE/` (`cd FE` first).
+
+- `npm install` — install dependencies (Node ≥ 18.18; see `FE/.nvmrc`).
 - `npm run dev` — start the Vite dev server.
 - `npm run build` / `npm run preview` — production build / preview.
 - `npm test` — run Vitest (`npm run test:watch` to watch; `vitest run <path>` for one file).
