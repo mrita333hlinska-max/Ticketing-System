@@ -1,0 +1,31 @@
+.bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid #e4e7eb;
+  border-radius: 6px;
+}
+
+.bar > * {
+  flex: 0 0 auto;
+}
+
+.bar > :first-child {
+  flex: 1 1 220px;
+}
+
+.clear {
+  /* Align with the inputs that have a label above them. */
+  margin-bottom: 1px;
+}
+
+.count {
+  margin-left: auto;
+  align-self: center;
+  color: #616e7c;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}

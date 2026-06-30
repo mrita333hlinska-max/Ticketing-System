@@ -1,0 +1,26 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #3e4c59;
+}
+
+.select {
+  font: inherit;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #cbd2d9;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1f2933;
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: 2px solid #1f2933;
+  outline-offset: -1px;
+}

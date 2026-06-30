@@ -1,0 +1,40 @@
+.column {
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  flex: 1 1 0;
+  background: #f0f2f5;
+  border-radius: 6px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+}
+
+.label {
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #1f2933;
+}
+
+.dropZone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0 0.6rem 0.75rem;
+  min-height: 120px;
+  flex: 1;
+  border-radius: 6px;
+}
+
+.dropOver {
+  outline: 2px dashed #7b8794;
+  outline-offset: -4px;
+  background: #e4e7eb;
+}

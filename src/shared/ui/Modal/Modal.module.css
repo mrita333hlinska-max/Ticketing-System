@@ -1,0 +1,50 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4rem 1rem;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.dialog {
+  background: #ffffff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 12px 32px rgb(15 23 42 / 0.25);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e4e7eb;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #616e7c;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+
+.close:hover {
+  color: #1f2933;
+}
+
+.body {
+  padding: 1.25rem;
+}
