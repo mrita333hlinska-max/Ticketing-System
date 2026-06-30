@@ -88,6 +88,7 @@ export function SignUpForm() {
         label="Confirm password"
         type="password"
         autoComplete="new-password"
+        placeholder="Re-enter your password"
         value={confirm}
         onChange={(event) => setConfirm(event.target.value)}
       />

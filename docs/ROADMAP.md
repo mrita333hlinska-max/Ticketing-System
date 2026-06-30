@@ -13,9 +13,9 @@ This supersedes the earlier localStorage/single-board plan.
 - ✅ Phase 4 — Kanban board
 - ✅ Phase 5 — ticket detail / edit / comments
 - ✅ Phase 6 — teams management
-- ⬜ **Phase 7 — epics management (not started; the Epics page is still a placeholder)**
+- ✅ Phase 7 — epics management
 - ✅ Phase 8 — auth flow
-- ◻️ Phase 9 — testing & polish (in progress; backend business-flow test still deferred until a backend exists)
+- ✅ Phase 9 — testing & polish (backend business-flow test deferred until a backend exists)
 
 ## Decisions baked in
 

@@ -1,0 +1,25 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.title {
+  margin: 0;
+}
+
+.teamSelect {
+  max-width: 280px;
+}
+
+.error {
+  margin: 0;
+  color: #cf1124;
+}

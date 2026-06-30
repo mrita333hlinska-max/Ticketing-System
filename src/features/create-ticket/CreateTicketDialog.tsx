@@ -88,12 +88,14 @@ export function CreateTicketDialog({
         />
         <TextInput
           label="Title"
+          placeholder="Short summary of the issue"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           autoFocus
         />
         <TextArea
           label="Body"
+          placeholder="Describe the problem or request…"
           value={body}
           onChange={(event) => setBody(event.target.value)}
         />

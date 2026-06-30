@@ -82,6 +82,7 @@ export function TicketForm({ form, teams, epics }: TicketFormProps) {
 
       <TextInput
         label="Title"
+        placeholder="Short summary of the issue"
         value={form.title}
         onChange={(event) => form.setTitle(event.target.value)}
       />
@@ -89,6 +90,7 @@ export function TicketForm({ form, teams, epics }: TicketFormProps) {
       <TextArea
         label="Body"
         rows={8}
+        placeholder="Describe the problem or request…"
         value={form.body}
         onChange={(event) => form.setBody(event.target.value)}
       />

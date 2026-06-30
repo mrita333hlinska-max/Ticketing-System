@@ -70,6 +70,7 @@ export function LoginForm() {
         label="Password"
         type="password"
         autoComplete="current-password"
+        placeholder="Your password"
         value={password}
         onChange={(event) => setPassword(event.target.value)}
       />
