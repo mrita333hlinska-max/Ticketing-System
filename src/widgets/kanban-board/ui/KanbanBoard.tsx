@@ -111,6 +111,14 @@ export function KanbanBoard() {
         </div>
       )}
 
+      {visibleTickets.length === 0 && (
+        <p className={styles.emptyHint}>
+          {board.tickets.length === 0
+            ? 'No tickets yet — create one with “+ New ticket”.'
+            : 'No tickets match your filters.'}
+        </p>
+      )}
+
       <div className={styles.columns}>
         {columns.map((column) => (
           <BoardColumn

@@ -4,6 +4,19 @@ Phased build plan, aligned to [REQUIREMENTS.md](REQUIREMENTS.md) (what),
 [PROJECT_RULES.md](../PROJECT_RULES.md) (how), and [design/](design/) (looks).
 This supersedes the earlier localStorage/single-board plan.
 
+## Status
+
+- ✅ Phase 0 — FSD skeleton
+- ✅ Phase 1 — entities & workflow
+- ✅ Phase 2 — data layer (TicketApi + stub)
+- ✅ Phase 3 — app shell & routing
+- ✅ Phase 4 — Kanban board
+- ✅ Phase 5 — ticket detail / edit / comments
+- ✅ Phase 6 — teams management
+- ⬜ **Phase 7 — epics management (not started; the Epics page is still a placeholder)**
+- ✅ Phase 8 — auth flow
+- ◻️ Phase 9 — testing & polish (in progress; backend business-flow test still deferred until a backend exists)
+
 ## Decisions baked in
 
 - **Architecture:** Feature-Sliced Design — `app → pages → widgets → features →

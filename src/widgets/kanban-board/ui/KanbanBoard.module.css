@@ -44,3 +44,9 @@
 .message {
   color: #3e4c59;
 }
+
+.emptyHint {
+  margin: 0;
+  padding: 0.75rem 0;
+  color: #616e7c;
+}
