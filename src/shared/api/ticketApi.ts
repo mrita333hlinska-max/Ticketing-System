@@ -34,6 +34,10 @@ export interface TicketApi {
   /** Re-issue a verification email; invalidates earlier unused tokens. */
   resendVerification(email: string): Promise<void>;
 
+  // --- Users (read-only directory) ---
+  /** All users, for resolving `createdBy` / comment author display names. */
+  getUsers(): Promise<User[]>;
+
   // --- Teams (§4) ---
   getTeams(): Promise<Team[]>;
   createTeam(input: CreateTeamInput): Promise<Team>;

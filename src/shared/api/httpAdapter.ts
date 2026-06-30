@@ -86,6 +86,9 @@ export function createHttpAdapter(baseUrl: string = API_BASE_URL): TicketApi {
     resendVerification: (email: string): Promise<void> =>
       request('POST', '/auth/resend', { body: { email } }),
 
+    // --- Users ---
+    getUsers: (): Promise<User[]> => request('GET', '/users'),
+
     // --- Teams ---
     getTeams: (): Promise<Team[]> => request('GET', '/teams'),
     createTeam: (input: CreateTeamInput): Promise<Team> =>

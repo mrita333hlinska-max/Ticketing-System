@@ -12,6 +12,24 @@ export function formatShortDate(isoTimestamp: string): string {
 }
 
 /**
+ * Full date + time in UTC, matching the ticket meta line in the design
+ * (e.g. "Jun 22, 09:15 UTC"). Timestamps are UTC from the API (§9).
+ */
+export function formatDateTimeUtc(isoTimestamp: string): string {
+  const date = new Date(isoTimestamp);
+  if (Number.isNaN(date.getTime())) return '';
+  const formatted = date.toLocaleString(undefined, {
+    timeZone: 'UTC',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+  return `${formatted} UTC`;
+}
+
+/**
  * Compact relative time from an ISO-8601 timestamp, matching the board card
  * style in the design (e.g. "2h ago", "1d ago", "just now").
  */

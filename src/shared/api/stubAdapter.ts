@@ -287,6 +287,13 @@ export function createStubApi(storage?: Storage): StubApi {
       save();
     },
 
+    // --- Users ---
+
+    async getUsers() {
+      requireSession();
+      return state.users.map(toPublicUser);
+    },
+
     // --- Teams (§4) ---
 
     async getTeams() {
