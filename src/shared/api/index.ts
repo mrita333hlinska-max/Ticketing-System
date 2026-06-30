@@ -8,6 +8,7 @@
 import { createStubApi } from './stubAdapter';
 
 export type { TicketApi } from './ticketApi';
+export { runRequest, type Result } from './result';
 export { API_BASE_URL } from './config';
 export {
   ApiError,

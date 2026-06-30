@@ -6,18 +6,14 @@ import type {
   Ticket,
   TicketStatus,
 } from '@/entities/ticket';
-import { api } from '@/shared/api';
+import * as boardService from '../api/boardService';
 
 type BoardStatus = 'loading' | 'ready' | 'error';
-
-function toMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'Something went wrong.';
-}
 
 /**
  * Orchestrates the board: loads teams, then the selected team's epics and
  * tickets, and exposes the actions the UI needs. Moves are optimistic and
- * revert on failure (REQUIREMENTS §8).
+ * revert on failure (REQUIREMENTS §8). Requests go through `boardService`.
  */
 export function useBoard() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -30,22 +26,20 @@ export function useBoard() {
   // Load teams once; pick the first as the active board.
   useEffect(() => {
     let active = true;
-    api
-      .getTeams()
-      .then((loadedTeams) => {
-        if (!active) return;
-        setTeams(loadedTeams);
-        if (loadedTeams.length > 0) {
-          setSelectedTeamId(loadedTeams[0].id);
-        } else {
-          setStatus('ready'); // no teams yet — nothing more to load
-        }
-      })
-      .catch((loadError) => {
-        if (!active) return;
+    boardService.loadTeams().then((result) => {
+      if (!active) return;
+      if (!result.ok) {
         setStatus('error');
-        setError(toMessage(loadError));
-      });
+        setError(result.error);
+        return;
+      }
+      setTeams(result.value);
+      if (result.value.length > 0) {
+        setSelectedTeamId(result.value[0].id);
+      } else {
+        setStatus('ready'); // no teams yet — nothing more to load
+      }
+    });
     return () => {
       active = false;
     };
@@ -56,18 +50,17 @@ export function useBoard() {
     if (!selectedTeamId) return;
     let active = true;
     setStatus('loading');
-    Promise.all([api.getEpics(selectedTeamId), api.getTickets(selectedTeamId)])
-      .then(([loadedEpics, loadedTickets]) => {
-        if (!active) return;
-        setEpics(loadedEpics);
-        setTickets(loadedTickets);
-        setStatus('ready');
-      })
-      .catch((loadError) => {
-        if (!active) return;
+    boardService.loadTeamData(selectedTeamId).then((result) => {
+      if (!active) return;
+      if (!result.ok) {
         setStatus('error');
-        setError(toMessage(loadError));
-      });
+        setError(result.error);
+        return;
+      }
+      setEpics(result.value.epics);
+      setTickets(result.value.tickets);
+      setStatus('ready');
+    });
     return () => {
       active = false;
     };
@@ -87,22 +80,26 @@ export function useBoard() {
             : ticket,
         ),
       );
-      try {
-        const moved = await api.moveTicket(ticketId, to);
-        setTickets((current) =>
-          current.map((ticket) => (ticket.id === ticketId ? moved : ticket)),
-        );
-      } catch (moveError) {
+
+      const result = await boardService.moveTicket(ticketId, to);
+      if (!result.ok) {
         setTickets(snapshot); // revert on failure
-        setError(`Could not move ticket. ${toMessage(moveError)}`);
+        setError(`Could not move ticket. ${result.error}`);
+        return;
       }
+      setTickets((current) =>
+        current.map((ticket) =>
+          ticket.id === ticketId ? result.value : ticket,
+        ),
+      );
     },
     [tickets],
   );
 
   const createTicket = useCallback(async (input: CreateTicketInput) => {
-    const created = await api.createTicket(input);
-    setTickets((current) => [...current, created]);
+    const result = await boardService.createTicket(input);
+    if (!result.ok) throw new Error(result.error); // surfaced by the dialog
+    setTickets((current) => [...current, result.value]);
   }, []);
 
   return {

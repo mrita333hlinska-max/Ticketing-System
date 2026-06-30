@@ -45,6 +45,17 @@ links here; read both before making changes.
   hooks** for component state and logic (no class components, no `this`). *Sole
   sanctioned exception:* custom `Error` subclasses (`class extends Error`), which
   need a class for `instanceof` checks.
+- **Effects are a last resort.** Derive values with `useMemo`, handle user
+  actions in event handlers, and reach for `useEffect` only for genuine external
+  synchronization (initial data load, param-driven refetch, subscriptions,
+  non-React event listeners) — never to mirror or transform props/state.
+  Memoize expensive derivations with `useMemo`; stabilize callbacks passed to
+  children or used as effect deps with `useCallback`.
+- **API calls live in a service layer, not in hooks or components.** Each
+  consuming slice has an `api/` segment of service functions that call the
+  `TicketApi` and return a typed `Result` (`{ ok, value } | { ok, error }`, via
+  `runRequest`). Hooks orchestrate state from the `Result`; they contain no
+  `try/catch` around requests.
 - **Naming:** names must say what they hold or do. **No vague names** (`Db`,
   `data`, `tmp`, `foo`, `obj`, `val`). **Do not shadow globals or reserved
   identifiers** — e.g. avoid type/variable names like `Comment`, `Event`,
@@ -72,6 +83,9 @@ links here; read both before making changes.
   be justified in a comment.)
 - `this` and `class`-based services / class components — use factory functions
   and hooks instead.
+- `useEffect` that only derives state from other state — use `useMemo`.
+- Inline `api`/`fetch` calls with `try/catch` inside hooks or components — call
+  the slice's service layer, which returns a `Result`.
 - Vague names and names that shadow globals/reserved identifiers (see Naming).
 
 ### Testing

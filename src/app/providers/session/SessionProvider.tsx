@@ -5,11 +5,15 @@
  * only, this signs in a throwaway local account so the auth-gated API (every
  * business endpoint, per REQUIREMENTS §3) is usable. This block is removed once
  * the real login flow + HTTP adapter land — it is dev-only scaffolding.
+ *
+ * All API access goes through `sessionService` (PROJECT_RULES §2); this file
+ * holds no try/catch around requests.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { LoginInput, SignUpInput, User } from '@/entities/user';
 import { api, type StubApi, type TicketApi } from '@/shared/api';
+import * as sessionService from './sessionService';
 import {
   SessionContext,
   type SessionContextValue,
@@ -27,15 +31,15 @@ function devVerificationToken(client: TicketApi, email: string): string | null {
 }
 
 /** Dev-only: ensure a verified local account exists, then sign in. */
-async function devSignIn(): Promise<User> {
-  try {
-    await api.signUp({ email: DEV_EMAIL, password: DEV_PASSWORD });
-  } catch {
-    // Account already exists — fine.
-  }
+async function devSignIn(): Promise<User | null> {
+  await sessionService.signUp({ email: DEV_EMAIL, password: DEV_PASSWORD });
   const token = devVerificationToken(api, DEV_EMAIL);
-  if (token) await api.verifyEmail(token);
-  return api.login({ email: DEV_EMAIL, password: DEV_PASSWORD });
+  if (token) await sessionService.verifyEmail(token);
+  const result = await sessionService.login({
+    email: DEV_EMAIL,
+    password: DEV_PASSWORD,
+  });
+  return result.ok ? result.value : null;
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {
@@ -48,19 +52,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const reload = useCallback(async () => {
-    const current = await api.getCurrentUser();
-    applyUser(current);
+    const result = await sessionService.fetchCurrentUser();
+    applyUser(result.ok ? result.value : null);
   }, [applyUser]);
 
   useEffect(() => {
     let active = true;
     (async () => {
-      let current = await api.getCurrentUser();
+      const currentResult = await sessionService.fetchCurrentUser();
+      let current = currentResult.ok ? currentResult.value : null;
       if (!current && import.meta.env.DEV) {
         current = await devSignIn();
       }
       if (active) applyUser(current);
-    })().catch(() => active && applyUser(null));
+    })();
     return () => {
       active = false;
     };
@@ -68,26 +73,33 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (input: LoginInput) => {
-      const next = await api.login(input);
-      applyUser(next);
+      const result = await sessionService.login(input);
+      if (!result.ok) throw new Error(result.error);
+      applyUser(result.value);
     },
     [applyUser],
   );
 
   const logout = useCallback(async () => {
-    await api.logout();
+    await sessionService.logout();
     applyUser(null);
   }, [applyUser]);
 
-  const signUp = useCallback((input: SignUpInput) => api.signUp(input), []);
-  const verifyEmail = useCallback(
-    (token: string) => api.verifyEmail(token),
-    [],
-  );
-  const resendVerification = useCallback(
-    (email: string) => api.resendVerification(email),
-    [],
-  );
+  const signUp = useCallback(async (input: SignUpInput) => {
+    const result = await sessionService.signUp(input);
+    if (!result.ok) throw new Error(result.error);
+    return result.value;
+  }, []);
+
+  const verifyEmail = useCallback(async (token: string) => {
+    const result = await sessionService.verifyEmail(token);
+    if (!result.ok) throw new Error(result.error);
+  }, []);
+
+  const resendVerification = useCallback(async (email: string) => {
+    const result = await sessionService.resendVerification(email);
+    if (!result.ok) throw new Error(result.error);
+  }, []);
 
   const value = useMemo<SessionContextValue>(
     () => ({
