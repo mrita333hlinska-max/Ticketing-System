@@ -18,7 +18,8 @@ links here; read both before making changes.
   (cards may move between any two states — see REQUIREMENTS §8), with a
   functional, design-accurate UI.
 - **Tech stack (this repo):**
-  - Frontend: **React + TypeScript**, built with **Vite**.
+  - Frontend: **React (function components + hooks) + TypeScript**, built with
+    **Vite**. No class components.
   - Data: the **system of record is a backend RDBMS reached over an API** — see
     REQUIREMENTS §9. The frontend accesses it through an abstract `TicketApi`
     service layer (an HTTP adapter). `localStorage` is **never** the source of
@@ -39,6 +40,16 @@ links here; read both before making changes.
   entities → shared`). A slice never imports from a layer above it.
 - **Principles:** SOLID, KISS, DRY. Reference and follow existing patterns in the
   codebase before introducing a new architectural style.
+- **Functions over classes:** prefer pure functions and **factory functions
+  returning closures** to `class`-based services; **avoid `this`**. Use **React
+  hooks** for component state and logic (no class components, no `this`). *Sole
+  sanctioned exception:* custom `Error` subclasses (`class extends Error`), which
+  need a class for `instanceof` checks.
+- **Naming:** names must say what they hold or do. **No vague names** (`Db`,
+  `data`, `tmp`, `foo`, `obj`, `val`). **Do not shadow globals or reserved
+  identifiers** — e.g. avoid type/variable names like `Comment`, `Event`,
+  `Element`, `Document`, `Map`, `Error`; qualify them (`TicketComment`,
+  `DomainEvent`). Booleans read as predicates (`isVerified`, `hasTickets`).
 - **Complexity:** keep hot paths (loops, sorts, filters) at **O(n)** / **O(n
   log n)** / **O(1)**; no accidental nested-loop blowups.
 - **Readability over cleverness:** no over-engineering, no unrequested
@@ -52,6 +63,9 @@ links here; read both before making changes.
 - Classic `for`, `for...of`, `for...in` loops — prefer array methods
   (`map`/`filter`/`reduce`/`some`/`every`). (Performance-critical exceptions must
   be justified in a comment.)
+- `this` and `class`-based services / class components — use factory functions
+  and hooks instead.
+- Vague names and names that shadow globals/reserved identifiers (see Naming).
 
 ### Testing
 
