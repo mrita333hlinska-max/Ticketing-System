@@ -15,6 +15,12 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* FSD path alias: import from `@/shared/...`, `@/entities/...`, etc.
+       (paths resolve relative to this config under moduleResolution: bundler) */
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
     /* Strictness */
     "strict": true,
     "noUnusedLocals": true,

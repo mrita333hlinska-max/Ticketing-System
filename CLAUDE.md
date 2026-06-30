@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > - [PROJECT_RULES.md](PROJECT_RULES.md) — engineering rules, coding standards, anti-patterns, architecture (**how to build**).
 > - [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) — functional + non-functional spec (**what to build**).
 > - [docs/design/](docs/design/) — screen-by-screen UI reference (**what it looks like**).
+> - [docs/ROADMAP.md](docs/ROADMAP.md) — phased implementation plan (**how we get there**).
 >
 > The notes below are a quick orientation; the docs above win on any conflict.
 

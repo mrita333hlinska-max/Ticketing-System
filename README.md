@@ -10,6 +10,7 @@ storage.
 - [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) — functional + non-functional spec (**what to build**).
 - [PROJECT_RULES.md](PROJECT_RULES.md) — engineering rules & standards (**how to build**).
 - [docs/design/](docs/design/) — screen-by-screen UI reference (**what it looks like**).
+- [docs/ROADMAP.md](docs/ROADMAP.md) — phased implementation plan (**how we get there**).
 - [CLAUDE.md](CLAUDE.md) — orientation for contributors/agents.
 
 ## Prerequisites
