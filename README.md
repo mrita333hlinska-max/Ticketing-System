@@ -10,14 +10,15 @@ storage.
 - [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) — functional + non-functional spec (**what to build**).
 - [PROJECT_RULES.md](PROJECT_RULES.md) — engineering rules & standards (**how to build**).
 - [docs/design/](docs/design/) — screen-by-screen UI reference (**what it looks like**).
-- [docs/ROADMAP.md](docs/ROADMAP.md) — phased implementation plan (**how we get there**).
+- [docs/ROADMAP.md](docs/ROADMAP.md) — phased **frontend** plan (**how we get there**).
+- [docs/ROADMAP-BE.md](docs/ROADMAP-BE.md) — phased **backend** (API + RDBMS) plan.
 - [CLAUDE.md](CLAUDE.md) — orientation for contributors/agents.
 
 ## Repository layout
 
 - [FE/](FE/) — frontend (Vite + React + TypeScript). All FE tooling and
   `package.json` live here; run the scripts below from inside `FE/`.
-- [BE/](BE/) — backend (API + RDBMS). Not yet scaffolded.
+- [BE/](BE/) — backend (API + RDBMS). Planned; see [docs/ROADMAP-BE.md](docs/ROADMAP-BE.md).
 
 ## Prerequisites
 

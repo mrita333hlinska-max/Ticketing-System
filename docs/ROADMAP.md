@@ -1,8 +1,9 @@
-# Implementation Roadmap
+# Frontend Implementation Roadmap
 
-Phased build plan, aligned to [REQUIREMENTS.md](REQUIREMENTS.md) (what),
-[PROJECT_RULES.md](../PROJECT_RULES.md) (how), and [design/](design/) (looks).
-This supersedes the earlier localStorage/single-board plan.
+Phased build plan for the **frontend**, aligned to [REQUIREMENTS.md](REQUIREMENTS.md)
+(what), [PROJECT_RULES.md](../PROJECT_RULES.md) (how), and [design/](design/)
+(looks). This supersedes the earlier localStorage/single-board plan. The
+**backend** plan lives in [ROADMAP-BE.md](ROADMAP-BE.md).
 
 ## Status
 
@@ -16,6 +17,7 @@ This supersedes the earlier localStorage/single-board plan.
 - ✅ Phase 7 — epics management
 - ✅ Phase 8 — auth flow
 - ✅ Phase 9 — testing & polish (backend business-flow test deferred until a backend exists)
+- ☐ Phase 10 — connect to the backend, run & deploy (see [ROADMAP-BE.md](ROADMAP-BE.md))
 
 ## Decisions baked in
 
@@ -136,12 +138,43 @@ src/
 - `lint` + `format:check` + `build` + `test` green; desktop sanity in
   Chrome/Edge/Firefox.
 
+## Phase 10 — Connect to the backend, run & deploy
+
+Lands once the backend ([ROADMAP-BE.md](ROADMAP-BE.md)) satisfies the API
+contract. The FE was built against that contract, so this phase is wiring, not
+rework.
+
+- **Swap the adapter (one line).** In [`shared/api/index.ts`](../FE/src/shared/api/index.ts)
+  construct `createHttpAdapter()` instead of `createStubApi(...)` for the real
+  build. Keep the stub for **tests** and, if desired, dev — e.g. select by
+  `import.meta.env.PROD` or presence of `VITE_API_BASE_URL`. No UI or
+  service-layer edits: every screen already talks to the `TicketApi` seam and the
+  `ApiError` types line up with the backend's status codes.
+- **Base URL.** Leave `API_BASE_URL` defaulting to `'/api'`
+  ([`config.ts`](../FE/src/shared/api/config.ts)); behind nginx the SPA and API
+  are same-origin, so cookies work with no CORS. The HTTP adapter already sends
+  `credentials: 'include'`.
+- **Containerize the FE.** Add `FE/Dockerfile` (multi-stage: `npm ci` +
+  `npm run build` → nginx serving `dist/`) and `nginx.conf` (SPA fallback +
+  `location /api/` proxy to `backend:3000`).
+- **Run the whole stack.** From the repo root, `docker compose up --build`
+  starts postgres + backend + frontend (+ Mailpit for dev email). Verify the
+  Definition of Done end-to-end: sign up → read the verification email in Mailpit
+  → verify → log in → create teams/epics/tickets → drag a card → refresh and
+  confirm it persisted.
+- **Docs.** Update the root [README.md](../README.md) prerequisites/startup to
+  the `docker compose up --build` path and note the stub-vs-http toggle.
+- **E2E.** Point the existing Playwright suite at the composed stack for a
+  full-stack smoke run.
+
 ---
 
 ## Deferred / out of scope (current phase)
 
-- Backend service, RDBMS, migrations, SMTP integration, password hashing — only
-  their **frontend contract** is built now.
+- Backend service, RDBMS, migrations, SMTP integration, password hashing — built
+  in [ROADMAP-BE.md](ROADMAP-BE.md); the FE builds only their **contract** until
+  Phase 10 wires them together.
 - Real authentication enforcement (Phase 8 builds the screens; full gating lands
-  with the backend).
-- Backend business-flow test (Phase 9 note).
+  with the backend in Phase 10).
+- Backend business-flow test — now owned by [ROADMAP-BE.md](ROADMAP-BE.md)
+  Phase 8.
