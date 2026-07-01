@@ -36,7 +36,7 @@ Phased build plan for the **frontend**, aligned to [REQUIREMENTS.md](REQUIREMENT
 
 ## Target FSD layout
 
-```
+```text
 src/
   app/          providers, router, global styles
   pages/        login, signup, verify-email, board, ticket, teams, epics

@@ -30,8 +30,8 @@ Consequences the tests are built around:
    - the UI-driven test **asserts zero `/api` calls happen**, proving the app is
      still fully client-side.
 2. **State is seeded via localStorage**, not the network. Before the app boots,
-   `page.addInitScript` writes a ready-made stub state (a verified user + a team
-   + an active session) under the key `ticketing-system:stub:v1`. The stub
+   `page.addInitScript` writes a ready-made stub state (a verified user, a team,
+   and an active session) under the key `ticketing-system:stub:v1`. The stub
    starts empty by design (no seed data — REQUIREMENTS §9), so tests create
    their own starting point.
 

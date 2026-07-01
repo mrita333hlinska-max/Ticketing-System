@@ -1,0 +1,18 @@
+// markdownlint configuration for the whole repo.
+// Auto-detected by the VS Code markdownlint extension and by markdownlint-cli2.
+{
+  // Start from all default rules...
+  "default": true,
+
+  // MD013 (line-length): our docs wrap prose by hand at ~80 columns, but
+  // Markdown tables cannot be wrapped and inline links routinely push lines
+  // past 80. The 80-char default is more noise than signal here, so disable it
+  // rather than fight unwrappable tables. (Prose is still kept readable by hand.)
+  "MD013": false,
+
+  // MD060 (table-column-style): requires every row's pipes to align into
+  // visually even columns. Our tables contain links and long cells that make
+  // hand-alignment impractical to maintain, so disable this cosmetic rule.
+  // (Run Prettier on the Markdown if you ever want the columns auto-aligned.)
+  "MD060": false
+}

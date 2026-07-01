@@ -57,7 +57,7 @@ Phased build plan for the **backend** (API + RDBMS), aligned to
 Three containers, orchestrated from the **repository root** with
 `docker compose up --build` (REQUIREMENTS §11, Definition of Done):
 
-```
+```text
                          ┌─────────────┐
   browser ──:80──►  nginx (frontend)   │  serves compiled SPA
                     │  proxies /api ───┼──► backend (Express, :3000)
@@ -83,7 +83,7 @@ Three containers, orchestrated from the **repository root** with
 
 ## Target backend layout
 
-```
+```text
 BE/
   Dockerfile
   drizzle.config.ts
