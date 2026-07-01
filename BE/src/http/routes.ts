@@ -13,6 +13,9 @@ import { createMailer } from '../lib/mailer';
 import { createAuthRepository } from '../modules/auth/auth.repo';
 import { createAuthRouter } from '../modules/auth/auth.routes';
 import { createAuthService } from '../modules/auth/auth.service';
+import { createTeamRepository } from '../modules/teams/teams.repo';
+import { createTeamsRouter } from '../modules/teams/teams.routes';
+import { createTeamService } from '../modules/teams/teams.service';
 import { requireAuth } from './middleware/requireAuth';
 
 export function createApiRouter(): Router {
@@ -26,11 +29,11 @@ export function createApiRouter(): Router {
   // --- Everything below requires an authenticated session ---
   api.use(requireAuth);
 
-  // --- Protected module routers (added in later phases) ---
-  // api.use('/teams', createTeamsRouter());
-  // api.use('/epics', createEpicsRouter());
-  // api.use('/tickets', createTicketsRouter());
-  // api.use('/users', createUsersRouter());
+  // --- Protected module routers ---
+  api.use('/teams', createTeamsRouter(createTeamService({ repo: createTeamRepository(db) })));
+  // api.use('/epics', createEpicsRouter());       // Phase 5
+  // api.use('/tickets', createTicketsRouter());    // Phase 6
+  // api.use('/users', createUsersRouter());        // Phase 7
 
   return api;
 }
