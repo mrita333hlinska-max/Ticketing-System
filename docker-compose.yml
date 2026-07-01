@@ -1,0 +1,37 @@
+# Ticketing System — full-stack orchestration.
+#
+# From a clean checkout, `docker compose up --build` at the repository root must
+# bring up the whole solution with no host-installed Node/Postgres runtime
+# (REQUIREMENTS §6, Definition of Done).
+#
+# Phase 0–1 defines the database tier. The `backend`, `frontend` (nginx), and
+# `mailpit` services are added in ROADMAP-BE.md Phase 9 (backend Dockerfile +
+# nginx proxy). Until then this file stands up PostgreSQL so migrations and the
+# backend can run locally.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ticketing}
+    ports:
+      # Published for local (host) development; inside compose services reach it
+      # as host `db`.
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-ticketing}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db-data:
