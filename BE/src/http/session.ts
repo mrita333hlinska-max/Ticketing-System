@@ -11,7 +11,7 @@
  */
 import connectPgSimple from 'connect-pg-simple';
 import session from 'express-session';
-import type { RequestHandler } from 'express';
+import type { Request, RequestHandler } from 'express';
 import { env } from '../config/env';
 import { pool } from '../db/client';
 
@@ -45,5 +45,29 @@ export function createSessionMiddleware(): RequestHandler {
       secure: env.COOKIE_SECURE,
       maxAge: SEVEN_DAYS_MS,
     },
+  });
+}
+
+// Promise wrappers over express-session's callback API, so handlers can `await`
+// them without holding callbacks.
+
+/** Start a fresh session id on login (mitigates session fixation). */
+export function regenerateSession(request: Request): Promise<void> {
+  return new Promise((resolve, reject) => {
+    request.session.regenerate((error) => (error ? reject(error) : resolve()));
+  });
+}
+
+/** Persist the current session to the store. */
+export function saveSession(request: Request): Promise<void> {
+  return new Promise((resolve, reject) => {
+    request.session.save((error) => (error ? reject(error) : resolve()));
+  });
+}
+
+/** Destroy the session on logout. */
+export function destroySession(request: Request): Promise<void> {
+  return new Promise((resolve, reject) => {
+    request.session.destroy((error) => (error ? reject(error) : resolve()));
   });
 }

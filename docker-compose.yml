@@ -4,10 +4,11 @@
 # bring up the whole solution with no host-installed Node/Postgres runtime
 # (REQUIREMENTS §6, Definition of Done).
 #
-# Phase 0–1 defines the database tier. The `backend`, `frontend` (nginx), and
-# `mailpit` services are added in ROADMAP-BE.md Phase 9 (backend Dockerfile +
-# nginx proxy). Until then this file stands up PostgreSQL so migrations and the
-# backend can run locally.
+# The database and the Mailpit dev mail sink are defined here. The `backend` and
+# `frontend` (nginx) services are added in ROADMAP-BE.md Phase 9 (backend
+# Dockerfile + nginx proxy). Until then this file stands up PostgreSQL (for
+# migrations + the locally-run backend) and Mailpit (to catch verification
+# emails during development).
 
 services:
   db:
@@ -32,6 +33,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Dev SMTP sink: catches every outgoing email so QA can read verification
+  # links locally. Web UI on :8025, SMTP on :1025. Not a production mail server.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - '8025:8025' # web UI — open http://localhost:8025
+      - '1025:1025' # SMTP endpoint the backend sends to
 
 volumes:
   db-data:
