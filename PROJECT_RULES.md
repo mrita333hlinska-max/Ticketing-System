@@ -23,8 +23,8 @@ links here; read both before making changes.
   - Data: the **system of record is a backend RDBMS reached over an API** — see
     REQUIREMENTS §9. The frontend accesses it through an abstract `TicketApi`
     service layer (an HTTP adapter). `localStorage` is **never** the source of
-    record. (The early `localStorageAdapter`/`seed.ts` are temporary dev
-    stand-ins to be replaced, not the target.)
+    record. The only non-HTTP `TicketApi` implementation is an in-memory stub
+    used **solely by Vitest**; it is tree-shaken out of real builds.
   - Tests: **Vitest** (+ Testing Library, jsdom).
   - Styling: **CSS Modules**.
 
@@ -96,21 +96,20 @@ links here; read both before making changes.
 - At minimum, cover **one backend business flow** and **one frontend/API flow**
   (REQUIREMENTS §11).
 
-### API access & placeholders (current phase)
+### API access
 
-The backend does not exist yet; we are building the frontend against its
-contract (REQUIREMENTS §9).
+The backend exists; the frontend talks to it over the `TicketApi` HTTP seam
+(REQUIREMENTS §9).
 
-- **Use temporary placeholders instead of real API URLs.** Do not hardcode live
-  endpoints anywhere.
-- Keep the base URL in **one configurable place** (a single constant / env var,
-  e.g. `API_BASE_URL`), defaulting to a placeholder such as
-  `'/api'` or `'http://localhost:3000/api'` — never scatter literal URLs across
-  the code.
-- All data access goes through the `TicketApi` seam. Until the backend is ready,
-  back it with a stub/in-memory adapter behind that interface; swapping in the
-  real HTTP adapter must require **no UI changes**, only wiring + the configured
-  base URL.
+- **All data access goes through the `TicketApi` seam** (`FE/src/shared/api`).
+  Components and hooks never call `fetch`/`api.*` directly.
+- Keep the base URL in **one configurable place** — `API_BASE_URL` in
+  `FE/src/shared/api/config.ts`, defaulting to `'/api'` and overridable at build
+  time via `VITE_API_BASE_URL`. Never scatter literal URLs across the code. In
+  local dev the Vite dev server proxies `/api` to the backend on `:3000`; in the
+  container nginx proxies `/api` instead.
+- The in-memory stub adapter behind the same interface is **test-only** (Vitest);
+  it must never become a runtime code path in a real build.
 
 ### Security & data rules (non-negotiable)
 
@@ -169,8 +168,9 @@ each screen.
 
 - Must run on a clean Windows, macOS, or Linux laptop. Commands live in
   [CLAUDE.md](CLAUDE.md#commands) (not repeated here).
-- **Current phase:** the frontend runs standalone via the stub adapter
-  (`npm install` → `npm run dev`), no backend required. **Target:** the full
-  system also needs the backend API + RDBMS (REQUIREMENTS §9) — so "no backend"
-  holds only while the stub is in place.
+- **Running the system:** `docker compose up --build` from the repo root brings
+  up the full stack (db + backend API + frontend) with no host Node/Postgres
+  required (REQUIREMENTS §6). For host-based frontend dev, `npm run dev` needs the
+  backend reachable on `:3000` (run it via Docker or `cd BE && npm run dev`) —
+  the frontend always talks to the real API, so it is **not** standalone.
 - Node version pinned via `.nvmrc` and `engines` in `package.json`.

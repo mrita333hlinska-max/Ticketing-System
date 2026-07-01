@@ -14,11 +14,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-The frontend is **scaffolded** (Vite + React + TypeScript) and runs, but is being
-reworked to match the full spec. The placeholder board/state code under `FE/src/`
-predates REQUIREMENTS.md — see its **Reconciliation** table for the deltas
-(localStorage → backend API, new states/types, auth, Epics, Comments, no seed
-data). Treat REQUIREMENTS.md as the target, not the current `FE/src/` contents.
+Both apps are scaffolded and built out against the spec, and run together as a
+full stack:
+
+- **Frontend** — Vite + React + TypeScript, organized with Feature-Sliced Design.
+- **Backend** — Express 5 + Drizzle ORM + PostgreSQL, organized by domain module.
+
+The frontend **always talks to the real backend** over the `TicketApi` HTTP seam
+(`/api`) — never browser storage. In local dev the Vite dev server proxies `/api`
+to the backend on `:3000`, so `npm run dev` on the frontend alone will 500 on
+`/api/*` until the backend is running (see **Commands**). The in-memory stub
+adapter (`FE/src/shared/api/stubAdapter.ts`) exists **only for Vitest** and is
+tree-shaken out of real builds. Treat [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)
+as the source of truth for behavior.
 
 ## What we're building
 
@@ -33,18 +41,40 @@ RDBMS reached over an API** — not browser storage. Full detail in
 The repo is split into two top-level apps:
 
 - `FE/` — the frontend (Vite + React + TypeScript). All FE tooling, config, and
-  `package.json` live here; run the commands below from inside `FE/`.
-- `BE/` — the backend (API + RDBMS). Not yet scaffolded.
+  `package.json` live here; run the FE commands below from inside `FE/`.
+- `BE/` — the backend: **Express 5 + Drizzle ORM + PostgreSQL**, organized by
+  domain module under `BE/src/modules/` (`auth`, `teams`, `epics`, `tickets`,
+  `comments`, `users`). Drizzle migrations live in `BE/drizzle/`. Run the BE
+  commands below from inside `BE/`.
+- `docker-compose.yml` (repo root) — full-stack orchestration (db → backend →
+  frontend + a Mailpit SMTP sink).
 
 Project-wide files (`README.md`, `CLAUDE.md`, `PROJECT_RULES.md`, `docs/`,
 `LICENSE`) and the shared `.gitignore` stay at the repo root.
 
 ## Commands
 
-Run these from `FE/` (`cd FE` first).
+### Full stack (from the repo root)
+
+- `docker compose up --build` — bring up the whole system (db + backend +
+  frontend + Mailpit) with no host Node/Postgres needed. Open the app at
+  `http://localhost:8080`; read verification emails at `http://localhost:8025`.
+
+### Frontend (`cd FE` first)
 
 - `npm install` — install dependencies (Node ≥ 18.18; see `FE/.nvmrc`).
-- `npm run dev` — start the Vite dev server.
+- `npm run dev` — start the Vite dev server (**needs the backend on `:3000`** —
+  bring it up with Docker or `cd BE && npm run dev`; otherwise `/api/*` returns 500).
 - `npm run build` / `npm run preview` — production build / preview.
 - `npm test` — run Vitest (`npm run test:watch` to watch; `vitest run <path>` for one file).
+- `npm run lint` / `npm run format` — ESLint / Prettier.
+
+### Backend (`cd BE` first)
+
+- `npm install` — install dependencies (Node ≥ 18.18; see `BE/.nvmrc`).
+- `npm run dev` — start the API on `:3000` (`tsx watch`; runs migrations, then listens).
+  Needs PostgreSQL reachable via `DATABASE_URL` (e.g. `docker compose up -d db`).
+- `npm run db:generate` — emit a new Drizzle migration from `src/db/schema.ts`.
+- `npm run db:migrate` — apply pending migrations. `npm run db:studio` — Drizzle Studio.
+- `npm test` — run Vitest (flow tests need the test DB; see `BE/tests/`).
 - `npm run lint` / `npm run format` — ESLint / Prettier.
