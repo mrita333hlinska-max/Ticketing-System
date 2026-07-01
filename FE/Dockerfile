@@ -8,8 +8,6 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 
-# Use the real HTTP backend (same-origin /api), not the in-memory dev stub.
-ENV VITE_USE_HTTP_API=true
 RUN npm run build
 
 FROM nginx:alpine

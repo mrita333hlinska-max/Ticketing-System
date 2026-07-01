@@ -18,7 +18,8 @@ storage.
 
 - [FE/](FE/) — frontend (Vite + React + TypeScript). All FE tooling and
   `package.json` live here; run the scripts below from inside `FE/`.
-- [BE/](BE/) — backend (API + RDBMS). Planned; see [docs/ROADMAP-BE.md](docs/ROADMAP-BE.md).
+- [BE/](BE/) — backend (Node + Express + PostgreSQL via Drizzle). See
+  [BE/README.md](BE/README.md).
 
 ## Running the full stack (Docker)
 
@@ -59,20 +60,28 @@ docker compose down       # stop and remove containers (keeps the database)
 docker compose down -v     # also delete the database volume — a fully fresh start
 ```
 
-## Frontend-only development (stub, no backend)
+## Local development (with live reload)
 
-The frontend can also run standalone against an in-memory stub adapter — handy
-for UI work with no backend or database.
+Docker is the simplest way to run everything, but for fast frontend/backend
+iteration you can run them on the host. The frontend always talks to the real
+backend (there is no offline/stub mode), so start the backing services first.
 
-- **Node.js ≥ 18.18** (see [FE/.nvmrc](FE/.nvmrc); with nvm: `nvm use`).
+- **Node.js ≥ 20** (see [FE/.nvmrc](FE/.nvmrc); with nvm: `nvm use`).
 
 ```bash
-cd FE            # all frontend commands run from here
-npm install      # install dependencies
-npm run dev      # start the dev server (prints a localhost URL)
+# 1. Backing services (Postgres + Mailpit) in the background:
+docker compose up -d db mailpit
+
+# 2. Backend API (migrates on start, serves http://localhost:3000):
+cd BE && npm install && npm run dev
+
+# 3. Frontend dev server in another terminal (http://localhost:5173):
+cd FE && npm install && npm run dev
 ```
 
-Backend development commands live in [BE/README.md](BE/README.md).
+The Vite dev server proxies `/api` to the backend on `:3000` (see
+[FE/vite.config.ts](FE/vite.config.ts)), so the app is same-origin and session
+cookies work. Verification emails land in Mailpit at <http://localhost:8025>.
 
 ## Signing up & logging in
 
@@ -83,12 +92,9 @@ verify it via an emailed link, then log in. Every app route (`/board`, `/teams`,
 1. **Sign up** — open `/signup`, enter your email and a password (**minimum 8
    characters**, entered twice). Submitting creates an _unverified_ account.
 2. **Verify your email** — the backend emails a single-use verification link
-   pointing at `/verify?token=…` (expires after 24h, single-use). In the Docker
-   stack, open **Mailpit** at <http://localhost:8025>, open the message, and
-   click the link — it lands back on the app and activates the account.
-   > **Frontend-only dev** (`npm run dev`, no backend): the stub sends no real
-   > email, so the sign-up/login/verify screens show a clickable
-   > **"verify this account →"** link instead.
+   pointing at `/verify?token=…` (expires after 24h, single-use). Open
+   **Mailpit** at <http://localhost:8025>, open the message, and click the link —
+   it lands back on the app and activates the account.
 3. **Log in** — open `/login`, enter the same email and password. On success you
    land on `/board`.
 
@@ -96,7 +102,7 @@ verify it via an emailed link, then log in. Every app route (`/board`, `/teams`,
 
 - _"Verify your email before logging in"_ — the account exists but isn't
   verified yet. Use the **Resend email** action on the login or `/verify` screen
-  to get a fresh link (in dev, a new clickable verify link appears).
+  to get a fresh link (check Mailpit).
 - _Verification link expired or invalid_ — go to `/verify`, enter your email,
   and click **Resend email** for a new single-use link.
 - _Logging out_ — open the account menu in the top navigation and choose
@@ -111,13 +117,15 @@ verify it via an emailed link, then log in. Every app route (`/board`, `/teams`,
   cd BE && npm install && npm test   # unit tests + a full business-flow test
   ```
 
-- **Frontend** (Vitest unit + Playwright E2E, no backend needed):
+- **Frontend** unit tests (Vitest + jsdom; run in-memory, no server needed):
 
   ```bash
-  cd FE && npm install
-  npm test           # unit tests (jsdom)
-  npm run test:e2e   # Playwright end-to-end (starts the dev server)
+  cd FE && npm install && npm test
   ```
+
+- **End-to-end** (Playwright) runs against the full stack — bring it up first
+  (`docker compose up --build`), then `cd FE && npm run test:e2e`. See
+  [FE/tests/README.md](FE/tests/README.md).
 
 ## Configuration
 

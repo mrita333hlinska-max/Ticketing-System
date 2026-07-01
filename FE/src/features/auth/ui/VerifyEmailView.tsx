@@ -2,10 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSession } from '@/app/providers/session';
 import { Button, Spinner, TextInput } from '@/shared/ui';
-import {
-  buildVerifyPath,
-  getDevVerificationToken,
-} from '../lib/devVerification';
 import styles from './authForms.module.css';
 
 type VerifyStatus = 'verifying' | 'success' | 'error';
@@ -22,7 +18,6 @@ export function VerifyEmailView() {
   // Resend (shown on the error/expired state).
   const [email, setEmail] = useState('');
   const [info, setInfo] = useState<string | null>(null);
-  const [devLink, setDevLink] = useState<string | null>(null);
 
   // Consume the single-use token from the link on mount (external sync).
   useEffect(() => {
@@ -51,7 +46,6 @@ export function VerifyEmailView() {
   async function handleResend() {
     setError(null);
     setInfo(null);
-    setDevLink(null);
     if (!email.trim()) {
       setError('Enter your email to get a new verification link.');
       return;
@@ -59,8 +53,6 @@ export function VerifyEmailView() {
     try {
       await resendVerification(email);
       setInfo('Verification email sent.');
-      const nextToken = getDevVerificationToken(email);
-      if (nextToken) setDevLink(buildVerifyPath(nextToken));
     } catch (resendError) {
       setError(
         resendError instanceof Error
@@ -111,11 +103,6 @@ export function VerifyEmailView() {
         onChange={(event) => setEmail(event.target.value)}
       />
       {info && <p className={styles.info}>{info}</p>}
-      {devLink && (
-        <p className={styles.devNote}>
-          Dev: <Link to={devLink}>verify this account →</Link>
-        </p>
-      )}
       <Button onClick={handleResend}>Resend email</Button>
       <div className={styles.links}>
         <Link to="/login" className={styles.link}>

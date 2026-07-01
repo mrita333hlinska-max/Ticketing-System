@@ -2,10 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '@/app/providers/session';
 import { Button, TextInput } from '@/shared/ui';
-import {
-  buildVerifyPath,
-  getDevVerificationToken,
-} from '../lib/devVerification';
 import styles from './authForms.module.css';
 
 export function LoginForm() {
@@ -16,7 +12,6 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [devLink, setDevLink] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -37,7 +32,6 @@ export function LoginForm() {
   async function handleResend() {
     setError(null);
     setInfo(null);
-    setDevLink(null);
     if (!email.trim()) {
       setError('Enter your email to resend the verification link.');
       return;
@@ -45,8 +39,6 @@ export function LoginForm() {
     try {
       await resendVerification(email);
       setInfo('Verification email sent.');
-      const token = getDevVerificationToken(email);
-      if (token) setDevLink(buildVerifyPath(token));
     } catch (resendError) {
       setError(
         resendError instanceof Error
@@ -81,11 +73,6 @@ export function LoginForm() {
         </p>
       )}
       {info && <p className={styles.info}>{info}</p>}
-      {devLink && (
-        <p className={styles.devNote}>
-          Dev: <Link to={devLink}>verify this account →</Link>
-        </p>
-      )}
 
       <Button type="submit" disabled={submitting || !email.trim() || !password}>
         {submitting ? 'Logging in…' : 'Log in'}

@@ -6,15 +6,13 @@ const { defineConfig, devices } = require('@playwright/test');
  *
  * NOTE: this is a `.cjs` file on purpose. The FE package is ESM
  * (`"type": "module"`), and this Playwright build cannot transpile a `.ts`
- * CONFIG file under ESM (it throws `Unknown file extension ".ts"`). Spec files
- * stay `.ts` — those go through Playwright's own transform pipeline and work.
+ * CONFIG file under ESM (it throws `Unknown file extension ".ts"`).
  *
- * The app has NO backend — the data layer is an in-memory / localStorage stub
- * (`src/shared/api/stubAdapter.ts`), so the only thing to serve is the Vite dev
- * server. Playwright starts (or reuses) `npm run dev` on the default Vite port.
+ * E2E runs against the full stack served by nginx at :8080 (start it with
+ * `docker compose up --build`), so the app talks to the real backend over
+ * `/api`. Bring the stack up before running Playwright.
  */
-const PORT = 5173;
-const BASE_URL = `http://localhost:${PORT}`;
+const BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:8080';
 
 module.exports = defineConfig({
   testDir: './tests',
@@ -27,10 +25,4 @@ module.exports = defineConfig({
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: {
-    command: 'npm run dev',
-    url: BASE_URL,
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
 });

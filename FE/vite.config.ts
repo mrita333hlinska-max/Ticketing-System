@@ -11,6 +11,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // Local dev proxies /api to the backend, so `npm run dev` talks to the real
+  // API (start it with `docker compose up -d db backend mailpit`). Same-origin,
+  // so session cookies work. In the container, nginx proxies /api instead.
+  server: {
+    proxy: {
+      '/api': { target: 'http://localhost:3000', changeOrigin: true },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',

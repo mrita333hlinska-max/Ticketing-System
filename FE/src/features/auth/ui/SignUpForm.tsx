@@ -2,10 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSession } from '@/app/providers/session';
 import { Button, TextInput } from '@/shared/ui';
-import {
-  buildVerifyPath,
-  getDevVerificationToken,
-} from '../lib/devVerification';
 import styles from './authForms.module.css';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -18,7 +14,6 @@ export function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [created, setCreated] = useState(false);
-  const [devLink, setDevLink] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -35,8 +30,6 @@ export function SignUpForm() {
     try {
       await signUp({ email, password });
       setCreated(true);
-      const token = getDevVerificationToken(email);
-      if (token) setDevLink(buildVerifyPath(token));
     } catch (signUpError) {
       setError(
         signUpError instanceof Error
@@ -54,11 +47,6 @@ export function SignUpForm() {
           Account created. Check your email to verify your account before
           logging in.
         </p>
-        {devLink && (
-          <p className={styles.devNote}>
-            Dev: <Link to={devLink}>verify this account →</Link>
-          </p>
-        )}
         <Link to="/login" className={styles.link}>
           Continue to login →
         </Link>
