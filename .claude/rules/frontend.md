@@ -1,55 +1,22 @@
 ---
 name: frontend
-description: Always-on rules for the React + TypeScript client. Auto-loads when touching files under FE/.
+description: Pointers for editing the React + TypeScript client. Auto-loads when touching files under FE/.
 paths:
   - "FE/**"
 ---
 
-# Frontend rules
+# Frontend (FE/) — pointers
 
-Supplement the root [PROJECT_RULES.md](../../PROJECT_RULES.md) and
-[docs/REQUIREMENTS.md](../../docs/REQUIREMENTS.md); on conflict, those win.
+The authoritative FE rules live in [PROJECT_RULES.md](../../PROJECT_RULES.md) §2
+(architecture, service layer, React discipline, naming) and §3 (styling). Read them
+before changing FE code — this file only points at what's easy to miss; it does **not**
+restate the rules.
 
-## Architecture — Feature-Sliced Design
+- **Data seam:** all data goes through `TicketApi` (`FE/src/shared/api`) and returns a
+  typed `Result` — canonical shapes in `shared/api/result.ts` and
+  `features/manage-teams/api/teamsService.ts`. Base URL only in `shared/api/config.ts`.
+- **Skills:** `/react-async-state` for a data screen (loading/error/empty/success),
+  `/dragdrop-rollback` for an optimistic board move.
+- **Creating a new slice?** See "Creating new code" in [CLAUDE.md](../../CLAUDE.md).
 
-- Layers, top→bottom: `app → pages → widgets → features → entities → shared`.
-  **Dependencies point downward only.** A slice never imports from a layer above it.
-- Slice segments: `ui/`, `model/` (hooks/state), `api/` (services), `lib/`.
-- Cross-slice imports go through the slice's public `index.ts` barrel using the `@/`
-  alias — never deep-import another slice's internals.
-
-## Data access — the service-layer seam (non-negotiable)
-
-- All data goes through the `TicketApi` seam in `FE/src/shared/api`. Components and
-  hooks **never** call `fetch`/`api.*` directly and hold **no `try/catch`** around
-  requests.
-- Each consuming slice has an `api/` segment whose functions wrap calls in
-  `runRequest(...)` and return a typed `Result<T>` (`{ ok, value } | { ok, error }`).
-  Canonical shape: `FE/src/shared/api/result.ts` and
-  `FE/src/features/manage-teams/api/teamsService.ts`.
-- Hooks branch on the `Result` to set state. Base URL lives only in
-  `FE/src/shared/api/config.ts` — never hardcode URLs.
-- Building a data screen? Invoke the `/react-async-state` skill. Optimistic board
-  move? Invoke `/dragdrop-rollback`.
-
-## React discipline
-
-- Function components + hooks only. No class components, no `this`.
-- **`useEffect` is a last resort** — only for genuine external sync (initial load,
-  param-driven refetch, subscriptions, non-React listeners). Derive with `useMemo`,
-  stabilize callbacks with `useCallback`. Never mirror/transform props or state in an
-  effect.
-- Styling is **CSS Modules** only — no inline styles. Match `docs/design`.
-- No classic `for`/`for...of`/`for...in` — use array methods. Desktop-only (Chrome,
-  Edge, Firefox).
-
-## Naming
-
-No vague names (`data`, `tmp`, `obj`). Don't shadow globals/reserved words — qualify
-(`TicketComment`, not `Comment`). Booleans read as predicates (`isVerified`). Name
-callback params after the element (`ticket`, not `t`).
-
-## Tests
-
-Vitest + Testing Library, jsdom; `*.test.ts(x)` next to code. `cd FE && npm test`.
-Must pass `npm run lint` and `npm run format:check`.
+Testing conventions live in the testing rule — nothing test-specific belongs here.

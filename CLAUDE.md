@@ -52,6 +52,26 @@ The repo is split into two top-level apps:
 Project-wide files (`README.md`, `CLAUDE.md`, `PROJECT_RULES.md`, `docs/`,
 `LICENSE`) and the shared `.gitignore` stay at the repo root.
 
+## Creating new code
+
+Path-scoped rules in `.claude/rules/` load when Claude *reads* a matching file, so
+they may not fire when a brand-new file is created from scratch. The **creation-time
+invariants** below therefore live here (always loaded). Detailed engineering rules are
+in [PROJECT_RULES.md](PROJECT_RULES.md); area reminders auto-load from `.claude/rules/`
+when you edit `FE/` or `BE/` files.
+
+- **New backend module** — create `BE/src/modules/<name>/` as three factory functions
+  (no classes, no `this`): `<name>.repo.ts` (`create<Name>Repository(db)`, the only
+  place touching Drizzle), `<name>.service.ts` (`create<Name>Service({ repo, ...deps })`,
+  business rules via dependency injection), `<name>.routes.ts`
+  (`create<Name>Router(service)`, zod-validate input, map domain errors to HTTP). Wire
+  it in `BE/src/http/routes.ts` — public routes above `requireAuth`, protected below.
+  Run the `/api-module` skill.
+- **New frontend slice** (Feature-Sliced Design) — segments `ui/`, `model/` (hooks),
+  `api/` (services wrapping calls in `runRequest`, returning a typed `Result`), `lib/`;
+  expose a public `index.ts` barrel and import across slices only through it. Run the
+  `/react-async-state` skill for a data screen, `/dragdrop-rollback` for a board move.
+
 ## Commands
 
 ### Full stack (from the repo root)
