@@ -13,6 +13,9 @@ import { createMailer } from '../lib/mailer';
 import { createAuthRepository } from '../modules/auth/auth.repo';
 import { createAuthRouter } from '../modules/auth/auth.routes';
 import { createAuthService } from '../modules/auth/auth.service';
+import { createEpicRepository } from '../modules/epics/epics.repo';
+import { createEpicsRouter } from '../modules/epics/epics.routes';
+import { createEpicService } from '../modules/epics/epics.service';
 import { createTeamRepository } from '../modules/teams/teams.repo';
 import { createTeamsRouter } from '../modules/teams/teams.routes';
 import { createTeamService } from '../modules/teams/teams.service';
@@ -30,8 +33,14 @@ export function createApiRouter(): Router {
   api.use(requireAuth);
 
   // --- Protected module routers ---
-  api.use('/teams', createTeamsRouter(createTeamService({ repo: createTeamRepository(db) })));
-  // api.use('/epics', createEpicsRouter());       // Phase 5
+  const teamRepo = createTeamRepository(db);
+  api.use('/teams', createTeamsRouter(createTeamService({ repo: teamRepo })));
+  api.use(
+    '/epics',
+    createEpicsRouter(
+      createEpicService({ repo: createEpicRepository(db), teams: teamRepo }),
+    ),
+  );
   // api.use('/tickets', createTicketsRouter());    // Phase 6
   // api.use('/users', createUsersRouter());        // Phase 7
 
