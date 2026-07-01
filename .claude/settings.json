@@ -30,6 +30,14 @@
           { "type": "command", "command": "node $PWD/hooks/migration_guard.js" }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "node $PWD/hooks/format_hook.js" }
+        ]
+      }
     ]
   }
 }
