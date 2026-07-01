@@ -23,6 +23,6 @@ may only point downward** (a layer never imports from a layer above it):
 
 Phase 0 (skeleton) is in place: `app/` entry + `shared/lib/`. Remaining layers
 are empty placeholders (`.gitkeep`) to be filled per
-[docs/ROADMAP.md](../docs/ROADMAP.md). Automated import-boundary linting
+[docs/ROADMAP-FE.md](../docs/ROADMAP-FE.md). Automated import-boundary linting
 (e.g. `eslint-plugin-boundaries`) is a planned follow-up; for now the rule is
 enforced by review.
