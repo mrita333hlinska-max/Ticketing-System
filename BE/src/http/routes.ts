@@ -19,9 +19,15 @@ import { createEpicService } from '../modules/epics/epics.service';
 import { createTeamRepository } from '../modules/teams/teams.repo';
 import { createTeamsRouter } from '../modules/teams/teams.routes';
 import { createTeamService } from '../modules/teams/teams.service';
+import { createCommentRepository } from '../modules/comments/comments.repo';
+import { createCommentsRouter } from '../modules/comments/comments.routes';
+import { createCommentService } from '../modules/comments/comments.service';
 import { createTicketRepository } from '../modules/tickets/tickets.repo';
 import { createTicketsRouter } from '../modules/tickets/tickets.routes';
 import { createTicketService } from '../modules/tickets/tickets.service';
+import { createUserRepository } from '../modules/users/users.repo';
+import { createUsersRouter } from '../modules/users/users.routes';
+import { createUserService } from '../modules/users/users.service';
 import { requireAuth } from './middleware/requireAuth';
 
 export function createApiRouter(): Router {
@@ -51,7 +57,13 @@ export function createApiRouter(): Router {
       createTicketService({ repo: ticketRepo, teams: teamRepo, epics: epicRepo }),
     ),
   );
-  // api.use('/users', createUsersRouter());        // Phase 7
+  api.use(
+    '/tickets/:ticketId/comments',
+    createCommentsRouter(
+      createCommentService({ repo: createCommentRepository(db), tickets: ticketRepo }),
+    ),
+  );
+  api.use('/users', createUsersRouter(createUserService({ repo: createUserRepository(db) })));
 
   return api;
 }
