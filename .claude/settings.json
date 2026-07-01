@@ -15,5 +15,21 @@
       "Bash(git log:*)"
     ],
     "deny": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          { "type": "command", "command": "node $PWD/hooks/read_hook.js" }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "node $PWD/hooks/migration_guard.js" }
+        ]
+      }
+    ]
   }
 }
