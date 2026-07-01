@@ -4,11 +4,9 @@
 # bring up the whole solution with no host-installed Node/Postgres runtime
 # (REQUIREMENTS §6, Definition of Done).
 #
-# The database and the Mailpit dev mail sink are defined here. The `backend` and
-# `frontend` (nginx) services are added in ROADMAP-BE.md Phase 9 (backend
-# Dockerfile + nginx proxy). Until then this file stands up PostgreSQL (for
-# migrations + the locally-run backend) and Mailpit (to catch verification
-# emails during development).
+# Tiers: db (PostgreSQL) → backend (Express API) → frontend (nginx serving the
+# SPA and proxying /api to the backend). Mailpit is a dev SMTP sink so QA can
+# read verification emails. Open the app at http://localhost:8080.
 
 services:
   db:
@@ -33,6 +31,36 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Application/API tier. Applies migrations on startup, then serves the API.
+  backend:
+    build: ./BE
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-ticketing}
+      # Dev default; override in real deployments. Not a real credential.
+      SESSION_SECRET: ${SESSION_SECRET:-local-dev-session-secret-change-me}
+      COOKIE_SECURE: 'false'
+      # Base for verification links — must match where you open the app.
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      SMTP_SECURE: 'false'
+      MAIL_FROM: no-reply@ticketing.local
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Presentation tier: nginx serves the built SPA and proxies /api → backend.
+  frontend:
+    build: ./FE
+    restart: unless-stopped
+    ports:
+      - '8080:80' # open the app at http://localhost:8080
+    depends_on:
+      - backend
 
   # Dev SMTP sink: catches every outgoing email so QA can read verification
   # links locally. Web UI on :8025, SMTP on :1025. Not a production mail server.

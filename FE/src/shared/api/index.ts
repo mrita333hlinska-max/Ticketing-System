@@ -1,11 +1,14 @@
 /**
  * Public API of the data layer. Import from `@/shared/api`.
  *
- * `api` is the single app-wide instance. Today it is the stub (localStorage-
- * backed when available, in-memory otherwise). Switching to the real backend is
- * a one-line change here — construct `HttpAdapter` instead — with no UI edits.
+ * `api` is the single app-wide instance. It is the real HTTP adapter when built
+ * with `VITE_USE_HTTP_API=true` (the containerized production build behind the
+ * nginx `/api` proxy), and the localStorage/in-memory stub otherwise — so `npm
+ * run dev`, Vitest, and Playwright keep running fully client-side with no
+ * backend. Switching is a build-time flag; no UI code changes.
  */
-import { createStubApi } from './stubAdapter';
+import { createHttpAdapter } from './httpAdapter';
+import { createStubApi, type StubApi } from './stubAdapter';
 
 export type { TicketApi } from './ticketApi';
 export { runRequest, type Result } from './result';
@@ -25,4 +28,12 @@ export { createHttpAdapter } from './httpAdapter';
 const browserStorage =
   typeof window !== 'undefined' ? window.localStorage : undefined;
 
-export const api = createStubApi(browserStorage);
+const useHttpApi = import.meta.env.VITE_USE_HTTP_API === 'true';
+
+// Typed as StubApi so tests can use its reset()/getVerificationTokenFor()
+// helpers. In production (VITE_USE_HTTP_API) the real HTTP adapter is used and
+// those stub-only methods are never called, so the cast is safe. App code only
+// ever uses the shared TicketApi surface.
+export const api: StubApi = useHttpApi
+  ? (createHttpAdapter() as unknown as StubApi)
+  : createStubApi(browserStorage);

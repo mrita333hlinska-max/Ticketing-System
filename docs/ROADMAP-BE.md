@@ -16,16 +16,16 @@ Phased build plan for the **backend** (API + RDBMS), aligned to
 
 ## Status
 
-- ☐ Phase 0 — Scaffolding & tooling
-- ☐ Phase 1 — Database schema & migrations
-- ☐ Phase 2 — App skeleton (Express, config, tiers, error mapping)
-- ☐ Phase 3 — Auth, sessions, email verification (SMTP)
-- ☐ Phase 4 — Teams
-- ☐ Phase 5 — Epics
-- ☐ Phase 6 — Tickets
-- ☐ Phase 7 — Comments & users directory
-- ☐ Phase 8 — Testing (backend business flow + unit)
-- ☐ Phase 9 — Docker Compose & repo-root startup
+- ✅ Phase 0 — Scaffolding & tooling
+- ✅ Phase 1 — Database schema & migrations
+- ✅ Phase 2 — App skeleton (Express, config, tiers, error mapping)
+- ✅ Phase 3 — Auth, sessions, email verification (SMTP)
+- ✅ Phase 4 — Teams
+- ✅ Phase 5 — Epics
+- ✅ Phase 6 — Tickets
+- ✅ Phase 7 — Comments & users directory
+- ✅ Phase 8 — Testing (backend business flow + unit)
+- ✅ Phase 9 — Docker Compose & repo-root startup
 
 ## Chosen stack (decided)
 

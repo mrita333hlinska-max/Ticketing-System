@@ -17,7 +17,7 @@ Phased build plan for the **frontend**, aligned to [REQUIREMENTS.md](REQUIREMENT
 - ✅ Phase 7 — epics management
 - ✅ Phase 8 — auth flow
 - ✅ Phase 9 — testing & polish (backend business-flow test deferred until a backend exists)
-- ☐ Phase 10 — connect to the backend, run & deploy (see [ROADMAP-BE.md](ROADMAP-BE.md))
+- ✅ Phase 10 — connect to the backend, run & deploy (see [ROADMAP-BE.md](ROADMAP-BE.md))
 
 ## Decisions baked in
 

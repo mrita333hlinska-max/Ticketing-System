@@ -20,18 +20,44 @@ storage.
   `package.json` live here; run the scripts below from inside `FE/`.
 - [BE/](BE/) — backend (API + RDBMS). Planned; see [docs/ROADMAP-BE.md](docs/ROADMAP-BE.md).
 
-## Prerequisites
+## Running the full stack (Docker)
+
+From a clean checkout, one command builds and starts every tier — PostgreSQL,
+the backend API, the frontend (nginx serving the SPA and proxying `/api`), and a
+Mailpit dev mail sink. **No host-installed Node or Postgres is required — only
+Docker Compose** (REQUIREMENTS §6).
+
+```bash
+docker compose up --build      # from the repository root
+```
+
+Then open:
+
+- **App** — <http://localhost:8080>
+- **Mailpit** (reads verification emails) — <http://localhost:8025>
+
+Sign up, open the verification email in Mailpit, click the link to verify, then
+log in. A fresh database starts **empty** (schema + migrations only, no seed
+data); create all teams/epics/tickets through the UI or API.
+
+> No `docker`? On macOS/Windows you don't need Docker Desktop — a free engine
+> such as [Colima](https://github.com/abiosoft/colima) (`brew install colima
+> docker docker-compose && colima start`) provides the same `docker compose`.
+
+## Frontend-only development (stub, no backend)
+
+The frontend can also run standalone against an in-memory stub adapter — handy
+for UI work with no backend or database.
 
 - **Node.js ≥ 18.18** (see [FE/.nvmrc](FE/.nvmrc); with nvm: `nvm use`).
-- **npm** (bundled with Node).
-
-## Getting started
 
 ```bash
 cd FE            # all frontend commands run from here
 npm install      # install dependencies
 npm run dev      # start the dev server (prints a localhost URL)
 ```
+
+Backend development commands live in [BE/README.md](BE/README.md).
 
 ## Signing up & logging in
 
