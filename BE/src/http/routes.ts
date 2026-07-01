@@ -19,6 +19,9 @@ import { createEpicService } from '../modules/epics/epics.service';
 import { createTeamRepository } from '../modules/teams/teams.repo';
 import { createTeamsRouter } from '../modules/teams/teams.routes';
 import { createTeamService } from '../modules/teams/teams.service';
+import { createTicketRepository } from '../modules/tickets/tickets.repo';
+import { createTicketsRouter } from '../modules/tickets/tickets.routes';
+import { createTicketService } from '../modules/tickets/tickets.service';
 import { requireAuth } from './middleware/requireAuth';
 
 export function createApiRouter(): Router {
@@ -34,14 +37,20 @@ export function createApiRouter(): Router {
 
   // --- Protected module routers ---
   const teamRepo = createTeamRepository(db);
+  const epicRepo = createEpicRepository(db);
+  const ticketRepo = createTicketRepository(db);
+
   api.use('/teams', createTeamsRouter(createTeamService({ repo: teamRepo })));
   api.use(
     '/epics',
-    createEpicsRouter(
-      createEpicService({ repo: createEpicRepository(db), teams: teamRepo }),
+    createEpicsRouter(createEpicService({ repo: epicRepo, teams: teamRepo })),
+  );
+  api.use(
+    '/tickets',
+    createTicketsRouter(
+      createTicketService({ repo: ticketRepo, teams: teamRepo, epics: epicRepo }),
     ),
   );
-  // api.use('/tickets', createTicketsRouter());    // Phase 6
   // api.use('/users', createUsersRouter());        // Phase 7
 
   return api;

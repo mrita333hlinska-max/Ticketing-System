@@ -2,7 +2,7 @@
  * Persistence for epics (REQUIREMENTS §5). Interface + Drizzle factory so the
  * service can be unit-tested with an in-memory fake (PROJECT_RULES §2).
  */
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { Database } from '../../db/client';
 import { epics, tickets } from '../../db/schema';
 
@@ -69,7 +69,7 @@ export function createEpicRepository(db: Database): EpicRepository {
         .set({
           title: values.title,
           description: values.description,
-          updatedAt: new Date(),
+          updatedAt: sql`now()`,
         })
         .where(eq(epics.id, id))
         .returning();

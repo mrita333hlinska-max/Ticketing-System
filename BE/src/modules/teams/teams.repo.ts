@@ -55,7 +55,7 @@ export function createTeamRepository(db: Database): TeamRepository {
     async updateName(id, name) {
       const rows = await db
         .update(teams)
-        .set({ name, updatedAt: new Date() })
+        .set({ name, updatedAt: sql`now()` })
         .where(eq(teams.id, id))
         .returning();
       return rows[0];
