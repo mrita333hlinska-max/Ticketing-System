@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSession } from '@/app/providers/session';
 import { Button, Spinner, TextInput } from '@/shared/ui';
 import {
@@ -12,6 +12,7 @@ type VerifyStatus = 'verifying' | 'success' | 'error';
 
 export function VerifyEmailView() {
   const { verifyEmail, resendVerification } = useSession();
+  const navigate = useNavigate();
   const [params] = useSearchParams();
   const token = params.get('token');
 
@@ -75,11 +76,23 @@ export function VerifyEmailView() {
 
   if (status === 'success') {
     return (
-      <div className={styles.form}>
-        <p>Your account is verified and ready to use.</p>
-        <Link to="/login" className={styles.link}>
-          Continue to login →
-        </Link>
+      <div className={styles.result}>
+        <span className={styles.checkCircle} aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none">
+            <path
+              d="M5 12.5l4.5 4.5L19 7.5"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        <h2 className={styles.resultTitle}>Email verified</h2>
+        <p className={styles.caption}>Your account is ready to use.</p>
+        <Button className={styles.resultButton} onClick={() => navigate('/login')}>
+          Continue to login
+        </Button>
       </div>
     );
   }

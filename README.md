@@ -44,6 +44,21 @@ data); create all teams/epics/tickets through the UI or API.
 > such as [Colima](https://github.com/abiosoft/colima) (`brew install colima
 > docker docker-compose && colima start`) provides the same `docker compose`.
 
+### Ports
+
+| Service          | URL / Port              | Purpose                          |
+| ---------------- | ----------------------- | -------------------------------- |
+| Frontend (nginx) | <http://localhost:8080> | The app (serves SPA + `/api`)    |
+| Mailpit          | <http://localhost:8025> | Read verification emails         |
+| PostgreSQL       | `localhost:5432`        | Database (for direct inspection) |
+
+### Stopping & resetting
+
+```bash
+docker compose down       # stop and remove containers (keeps the database)
+docker compose down -v     # also delete the database volume — a fully fresh start
+```
+
 ## Frontend-only development (stub, no backend)
 
 The frontend can also run standalone against an in-memory stub adapter — handy
@@ -68,10 +83,12 @@ verify it via an emailed link, then log in. Every app route (`/board`, `/teams`,
 1. **Sign up** — open `/signup`, enter your email and a password (**minimum 8
    characters**, entered twice). Submitting creates an _unverified_ account.
 2. **Verify your email** — the backend emails a single-use verification link
-   pointing at `/verify?token=…`. Opening it activates the account.
-   > **Dev mode:** the dev server uses a stub that sends no real email. Instead,
-   > the sign-up confirmation (and the login/verify screens) show a clickable
-   > **"verify this account →"** link — click it to verify locally.
+   pointing at `/verify?token=…` (expires after 24h, single-use). In the Docker
+   stack, open **Mailpit** at <http://localhost:8025>, open the message, and
+   click the link — it lands back on the app and activates the account.
+   > **Frontend-only dev** (`npm run dev`, no backend): the stub sends no real
+   > email, so the sign-up/login/verify screens show a clickable
+   > **"verify this account →"** link instead.
 3. **Log in** — open `/login`, enter the same email and password. On success you
    land on `/board`.
 
@@ -85,23 +102,31 @@ verify it via an emailed link, then log in. Every app route (`/board`, `/teams`,
 - _Logging out_ — open the account menu in the top navigation and choose
   **Log out**; you'll be returned to `/login`.
 
-## Scripts
+## Running the tests
 
-| Command           | Purpose                                            |
-| ----------------- | -------------------------------------------------- |
-| `npm run dev`     | Start the Vite dev server.                         |
-| `npm run build`   | Production build.                                  |
-| `npm run preview` | Preview the production build locally.              |
-| `npm test`        | Run tests (Vitest). `npm run test:watch` to watch. |
-| `npm run lint`    | Lint with ESLint.                                  |
-| `npm run format`  | Format with Prettier.                              |
+- **Backend** (Vitest + supertest, needs the DB container running):
+
+  ```bash
+  docker compose up -d db            # start Postgres
+  cd BE && npm install && npm test   # unit tests + a full business-flow test
+  ```
+
+- **Frontend** (Vitest unit + Playwright E2E, no backend needed):
+
+  ```bash
+  cd FE && npm install
+  npm test           # unit tests (jsdom)
+  npm run test:e2e   # Playwright end-to-end (starts the dev server)
+  ```
 
 ## Configuration
 
-No configuration is required in the current phase — the frontend runs against a
-stub data adapter, so **no backend or environment setup is needed** to start it.
-When the backend lands, the API base URL will come from a single configurable
-setting (placeholder `API_BASE_URL`); see PROJECT_RULES.md §2.
+All settings come from the environment. Copy [.env.example](.env.example) to
+`.env` to override compose defaults (Postgres credentials, `SESSION_SECRET`,
+`APP_BASE_URL`); backend-specific variables are documented in
+[BE/.env.example](BE/.env.example). No secrets are committed — a real `.env` is
+gitignored, and the compose `SESSION_SECRET` default is a clearly-labelled dev
+placeholder to override outside local use.
 
 ## Compatibility
 

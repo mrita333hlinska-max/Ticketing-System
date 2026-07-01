@@ -4,6 +4,43 @@
   gap: 1rem;
 }
 
+/* Success (verified) state — centered check, heading, caption, button. */
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.checkCircle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: #e4e7eb;
+  color: #1f2933;
+}
+
+.resultTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.caption {
+  margin: 0;
+  color: #616e7c;
+}
+
+.resultButton {
+  min-width: 200px;
+  margin-top: 0.25rem;
+}
+
 .error {
   margin: 0;
   color: #cf1124;
