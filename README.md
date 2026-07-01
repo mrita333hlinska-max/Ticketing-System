@@ -128,6 +128,16 @@ All settings come from the environment. Copy [.env.example](.env.example) to
 gitignored, and the compose `SESSION_SECRET` default is a clearly-labelled dev
 placeholder to override outside local use.
 
+## Data model — per-user workspaces (deviation from spec)
+
+**Intentional deviation from [REQUIREMENTS.md](docs/REQUIREMENTS.md) §4/§12.** The
+spec describes a _shared_ workspace ("all verified users can view and manage all
+teams"). By product decision, this build instead gives every user an **isolated
+workspace**: teams, epics, and tickets are scoped to the user who created them
+(`created_by`), so a new account starts empty and never sees another user's data.
+Requests for another user's records return **404** (existence is hidden), and
+team names are unique **per owner**. Everything else follows the spec.
+
 ## Compatibility
 
 Targets current desktop versions of **Chrome, Edge, and Firefox**. Desktop-only.

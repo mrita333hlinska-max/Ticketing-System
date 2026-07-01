@@ -1,8 +1,8 @@
 /**
- * Ticket service unit tests (Phase 6). Business rules only — in-memory fakes
- * for the ticket repo and the team/epic lookups. Covers team/epic existence,
- * the same-team epic rule, title/body validation, the updatedAt-only-on-change
- * rule (incl. drag-and-drop status moves), and delete/not-found.
+ * Ticket service unit tests (per-user ownership). In-memory fakes for the
+ * ticket repo and the team/epic lookups. Covers team/epic ownership, the
+ * same-team epic rule, title/body validation, updatedAt-only-on-change
+ * (incl. drag-and-drop moves), delete/not-found, and cross-user isolation.
  */
 import { describe, expect, it } from 'vitest';
 import { ApiError } from '../../lib/errors';
@@ -11,13 +11,19 @@ import type { TeamRepository } from '../teams/teams.repo';
 import { createTicketService } from './tickets.service';
 import type { TicketRecord, TicketRepository } from './tickets.repo';
 
+const OWNER = 'user-1';
+const OTHER = 'user-2';
+
 function createFakeTicketRepo(): TicketRepository {
   const rows: TicketRecord[] = [];
   let sequence = 0;
 
   return {
-    async list(teamId) {
-      return rows.filter((ticket) => !teamId || ticket.teamId === teamId);
+    async list(ownerId, teamId) {
+      return rows.filter(
+        (ticket) =>
+          ticket.createdBy === ownerId && (!teamId || ticket.teamId === teamId),
+      );
     },
     async findById(id) {
       return rows.find((ticket) => ticket.id === id) ?? null;
@@ -54,30 +60,35 @@ function createFakeTicketRepo(): TicketRepository {
   };
 }
 
-function createFakeTeams(ids: string[]): Pick<TeamRepository, 'findById'> {
+// teamId → owner id
+function createFakeTeams(
+  owners: Record<string, string>,
+): Pick<TeamRepository, 'findById'> {
   return {
     async findById(id) {
-      if (!ids.includes(id)) return null;
+      const createdBy = owners[id];
+      if (!createdBy) return null;
       const now = new Date(2026, 0, 1);
-      return { id, name: `Team ${id}`, createdAt: now, updatedAt: now };
+      return { id, name: `Team ${id}`, createdBy, createdAt: now, updatedAt: now };
     },
   };
 }
 
-// epicId -> teamId map for the fake epic lookup.
+// epicId → { teamId, createdBy }
 function createFakeEpics(
-  epicsByTeam: Record<string, string>,
+  epicsById: Record<string, { teamId: string; createdBy: string }>,
 ): Pick<EpicRepository, 'findById'> {
   return {
     async findById(id) {
-      const teamId = epicsByTeam[id];
-      if (!teamId) return null;
+      const entry = epicsById[id];
+      if (!entry) return null;
       const now = new Date(2026, 0, 1);
       const epic: EpicRecord = {
         id,
-        teamId,
+        teamId: entry.teamId,
         title: `Epic ${id}`,
         description: null,
+        createdBy: entry.createdBy,
         createdAt: now,
         updatedAt: now,
       };
@@ -87,12 +98,12 @@ function createFakeEpics(
 }
 
 function createSubject(options: {
-  teams?: string[];
-  epics?: Record<string, string>;
+  teams?: Record<string, string>;
+  epics?: Record<string, { teamId: string; createdBy: string }>;
 } = {}) {
   return createTicketService({
     repo: createFakeTicketRepo(),
-    teams: createFakeTeams(options.teams ?? ['team-1', 'team-2']),
+    teams: createFakeTeams(options.teams ?? { 'team-1': OWNER, 'team-2': OWNER }),
     epics: createFakeEpics(options.epics ?? {}),
   });
 }
@@ -114,131 +125,126 @@ describe('ticket service', () => {
         teamId: 'team-1',
         type: 'bug',
         title: '  Broken login  ',
-        body: '  Steps to reproduce  ',
+        body: '  Steps  ',
         epicId: null,
       },
-      'user-1',
+      OWNER,
     );
     expect(ticket.status).toBe('new');
-    expect(ticket.createdBy).toBe('user-1');
-    expect(ticket.title).toBe('Broken login'); // trimmed
-    expect(ticket.body).toBe('  Steps to reproduce  '); // stored as sent
+    expect(ticket.createdBy).toBe(OWNER);
+    expect(ticket.title).toBe('Broken login');
+    expect(ticket.body).toBe('  Steps  ');
   });
 
-  it('rejects create for a missing team (404) and empty title/body (400)', async () => {
+  it('rejects create for a missing/other-user team (404) and empty title/body (400)', async () => {
     const service = createSubject();
     await expectStatus(
-      service.create(
-        { teamId: 'ghost', type: 'bug', title: 'X', body: 'Y' },
-        'u',
-      ),
+      service.create({ teamId: 'ghost', type: 'bug', title: 'X', body: 'Y' }, OWNER),
+      404,
+    );
+    // team-1 is owned by OWNER; OTHER cannot create there.
+    await expectStatus(
+      service.create({ teamId: 'team-1', type: 'bug', title: 'X', body: 'Y' }, OTHER),
       404,
     );
     await expectStatus(
-      service.create(
-        { teamId: 'team-1', type: 'bug', title: '   ', body: 'Y' },
-        'u',
-      ),
+      service.create({ teamId: 'team-1', type: 'bug', title: '  ', body: 'Y' }, OWNER),
       400,
     );
     await expectStatus(
-      service.create(
-        { teamId: 'team-1', type: 'bug', title: 'X', body: '   ' },
-        'u',
-      ),
+      service.create({ teamId: 'team-1', type: 'bug', title: 'X', body: '  ' }, OWNER),
       400,
     );
   });
 
   it('rejects an epic that belongs to another team (400)', async () => {
-    const service = createSubject({ epics: { 'epic-A': 'team-2' } });
+    const service = createSubject({
+      epics: { 'epic-A': { teamId: 'team-2', createdBy: OWNER } },
+    });
     await expectStatus(
       service.create(
-        {
-          teamId: 'team-1',
-          type: 'feature',
-          title: 'X',
-          body: 'Y',
-          epicId: 'epic-A',
-        },
-        'u',
+        { teamId: 'team-1', type: 'feature', title: 'X', body: 'Y', epicId: 'epic-A' },
+        OWNER,
       ),
       400,
     );
   });
 
-  it('accepts an epic from the same team', async () => {
-    const service = createSubject({ epics: { 'epic-A': 'team-1' } });
+  it('rejects an epic owned by another user (404)', async () => {
+    const service = createSubject({
+      epics: { 'epic-A': { teamId: 'team-1', createdBy: OTHER } },
+    });
+    await expectStatus(
+      service.create(
+        { teamId: 'team-1', type: 'feature', title: 'X', body: 'Y', epicId: 'epic-A' },
+        OWNER,
+      ),
+      404,
+    );
+  });
+
+  it('accepts an epic from the same team owned by the user', async () => {
+    const service = createSubject({
+      epics: { 'epic-A': { teamId: 'team-1', createdBy: OWNER } },
+    });
     const ticket = await service.create(
-      {
-        teamId: 'team-1',
-        type: 'feature',
-        title: 'X',
-        body: 'Y',
-        epicId: 'epic-A',
-      },
-      'u',
+      { teamId: 'team-1', type: 'feature', title: 'X', body: 'Y', epicId: 'epic-A' },
+      OWNER,
     );
     expect(ticket.epicId).toBe('epic-A');
   });
 
-  it('drag-and-drop to the same status does not advance updatedAt', async () => {
+  it('drag to the same status does not advance updatedAt; a new status does', async () => {
     const service = createSubject();
     const ticket = await service.create(
       { teamId: 'team-1', type: 'bug', title: 'X', body: 'Y' },
-      'u',
+      OWNER,
     );
-    const same = await service.update(ticket.id, { status: 'new' });
+    const same = await service.update(ticket.id, { status: 'new' }, OWNER);
     expect(same.updatedAt).toBe(ticket.updatedAt);
-  });
-
-  it('drag-and-drop to a new status advances updatedAt', async () => {
-    const service = createSubject();
-    const ticket = await service.create(
-      { teamId: 'team-1', type: 'bug', title: 'X', body: 'Y' },
-      'u',
-    );
-    const moved = await service.update(ticket.id, { status: 'in_progress' });
+    const moved = await service.update(ticket.id, { status: 'in_progress' }, OWNER);
     expect(moved.status).toBe('in_progress');
     expect(moved.updatedAt).not.toBe(ticket.updatedAt);
   });
 
   it('clears the epic when epicId is set to null', async () => {
-    const service = createSubject({ epics: { 'epic-A': 'team-1' } });
+    const service = createSubject({
+      epics: { 'epic-A': { teamId: 'team-1', createdBy: OWNER } },
+    });
     const ticket = await service.create(
-      {
-        teamId: 'team-1',
-        type: 'bug',
-        title: 'X',
-        body: 'Y',
-        epicId: 'epic-A',
-      },
-      'u',
+      { teamId: 'team-1', type: 'bug', title: 'X', body: 'Y', epicId: 'epic-A' },
+      OWNER,
     );
-    const updated = await service.update(ticket.id, { epicId: null });
+    const updated = await service.update(ticket.id, { epicId: null }, OWNER);
     expect(updated.epicId).toBeNull();
   });
 
-  it('re-checks same-team when the ticket moves to another team', async () => {
-    // Epic belongs to team-1; moving the ticket to team-2 while keeping the
-    // epic must be rejected.
-    const service = createSubject({ epics: { 'epic-A': 'team-1' } });
+  it('re-checks same-team when the ticket moves to another team (400)', async () => {
+    const service = createSubject({
+      epics: { 'epic-A': { teamId: 'team-1', createdBy: OWNER } },
+    });
     const ticket = await service.create(
-      {
-        teamId: 'team-1',
-        type: 'bug',
-        title: 'X',
-        body: 'Y',
-        epicId: 'epic-A',
-      },
-      'u',
+      { teamId: 'team-1', type: 'bug', title: 'X', body: 'Y', epicId: 'epic-A' },
+      OWNER,
     );
-    await expectStatus(service.update(ticket.id, { teamId: 'team-2' }), 400);
+    await expectStatus(service.update(ticket.id, { teamId: 'team-2' }, OWNER), 400);
+  });
+
+  it('hides another user\'s ticket: get/update/remove 404, list excludes', async () => {
+    const service = createSubject();
+    const theirs = await service.create(
+      { teamId: 'team-1', type: 'bug', title: 'Secret', body: 'Y' },
+      OWNER,
+    );
+    await expectStatus(service.get(theirs.id, OTHER), 404);
+    await expectStatus(service.update(theirs.id, { status: 'done' }, OTHER), 404);
+    await expectStatus(service.remove(theirs.id, OTHER), 404);
+    expect(await service.list(OTHER)).toHaveLength(0);
   });
 
   it('get and remove report 404 for a missing ticket', async () => {
     const service = createSubject();
-    await expectStatus(service.get('nope'), 404);
-    await expectStatus(service.remove('nope'), 404);
+    await expectStatus(service.get('nope', OWNER), 404);
+    await expectStatus(service.remove('nope', OWNER), 404);
   });
 });

@@ -5,7 +5,7 @@
  * Deleting a ticket relies on the `comments.ticket_id` ON DELETE CASCADE FK, so
  * `remove` needs no explicit comment cleanup (§6).
  */
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import type { Database } from '../../db/client';
 import { tickets } from '../../db/schema';
 import type { TicketStatus, TicketType } from './tickets.schema';
@@ -32,7 +32,8 @@ export interface TicketUpdate {
 }
 
 export interface TicketRepository {
-  list(teamId?: string): Promise<TicketRecord[]>;
+  /** Tickets owned by `ownerId`, optionally filtered to one team's board. */
+  list(ownerId: string, teamId?: string): Promise<TicketRecord[]>;
   findById(id: string): Promise<TicketRecord | null>;
   insert(input: NewTicket): Promise<TicketRecord>;
   update(id: string, values: TicketUpdate): Promise<TicketRecord>;
@@ -41,15 +42,15 @@ export interface TicketRepository {
 
 export function createTicketRepository(db: Database): TicketRepository {
   return {
-    async list(teamId) {
-      if (teamId) {
-        return db
-          .select()
-          .from(tickets)
-          .where(eq(tickets.teamId, teamId))
-          .orderBy(desc(tickets.updatedAt));
-      }
-      return db.select().from(tickets).orderBy(desc(tickets.updatedAt));
+    async list(ownerId, teamId) {
+      const predicate = teamId
+        ? and(eq(tickets.createdBy, ownerId), eq(tickets.teamId, teamId))
+        : eq(tickets.createdBy, ownerId);
+      return db
+        .select()
+        .from(tickets)
+        .where(predicate)
+        .orderBy(desc(tickets.updatedAt));
     },
 
     async findById(id) {

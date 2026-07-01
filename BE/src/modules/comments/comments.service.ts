@@ -29,8 +29,8 @@ function toCommentDto(comment: CommentRecord): CommentDto {
 }
 
 export interface CommentService {
-  list(ticketId: string): Promise<CommentDto[]>;
-  add(ticketId: string, body: string, authorId: string): Promise<CommentDto>;
+  list(ticketId: string, userId: string): Promise<CommentDto[]>;
+  add(ticketId: string, body: string, userId: string): Promise<CommentDto>;
 }
 
 export function createCommentService(dependencies: {
@@ -39,22 +39,28 @@ export function createCommentService(dependencies: {
 }): CommentService {
   const { repo, tickets } = dependencies;
 
-  async function requireTicket(ticketId: string): Promise<void> {
+  /** The ticket must exist AND belong to the user (per-user isolation). */
+  async function requireOwnedTicket(
+    ticketId: string,
+    userId: string,
+  ): Promise<void> {
     const ticket = await tickets.findById(ticketId);
-    if (!ticket) throw new NotFoundError('Ticket not found.');
+    if (!ticket || ticket.createdBy !== userId) {
+      throw new NotFoundError('Ticket not found.');
+    }
   }
 
   return {
-    async list(ticketId) {
-      await requireTicket(ticketId);
+    async list(ticketId, userId) {
+      await requireOwnedTicket(ticketId, userId);
       const rows = await repo.listByTicket(ticketId);
       return rows.map(toCommentDto);
     },
 
-    async add(ticketId, body, authorId) {
-      await requireTicket(ticketId);
+    async add(ticketId, body, userId) {
+      await requireOwnedTicket(ticketId, userId);
       if (!body.trim()) throw new ValidationError('Comment cannot be empty.');
-      const comment = await repo.insert({ ticketId, authorId, body });
+      const comment = await repo.insert({ ticketId, authorId: userId, body });
       return toCommentDto(comment);
     },
   };

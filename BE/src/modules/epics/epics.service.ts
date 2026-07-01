@@ -50,10 +50,10 @@ function normalizeDescription(value: string | null | undefined): string | null {
 }
 
 export interface EpicService {
-  list(teamId?: string): Promise<EpicDto[]>;
-  create(input: CreateEpicInput): Promise<EpicDto>;
-  update(id: string, input: UpdateEpicInput): Promise<EpicDto>;
-  remove(id: string): Promise<void>;
+  list(userId: string, teamId?: string): Promise<EpicDto[]>;
+  create(input: CreateEpicInput, userId: string): Promise<EpicDto>;
+  update(id: string, input: UpdateEpicInput, userId: string): Promise<EpicDto>;
+  remove(id: string, userId: string): Promise<void>;
 }
 
 export function createEpicService(dependencies: {
@@ -62,15 +62,27 @@ export function createEpicService(dependencies: {
 }): EpicService {
   const { repo, teams } = dependencies;
 
+  /** Fetch an epic the user owns, or 404. */
+  async function ownedEpicOrThrow(id: string, userId: string) {
+    const epic = await repo.findById(id);
+    if (!epic || epic.createdBy !== userId) {
+      throw new NotFoundError('Epic not found.');
+    }
+    return epic;
+  }
+
   return {
-    async list(teamId) {
-      const rows = await repo.list(teamId);
+    async list(userId, teamId) {
+      const rows = await repo.list(userId, teamId);
       return rows.map(toEpicDto);
     },
 
-    async create(input) {
+    async create(input, userId) {
+      // The team must exist AND belong to this user.
       const team = await teams.findById(input.teamId);
-      if (!team) throw new NotFoundError('Team not found.');
+      if (!team || team.createdBy !== userId) {
+        throw new NotFoundError('Team not found.');
+      }
 
       const title = input.title.trim();
       if (!title) throw new ValidationError('Epic title is required.');
@@ -79,13 +91,13 @@ export function createEpicService(dependencies: {
         teamId: input.teamId,
         title,
         description: normalizeDescription(input.description),
+        createdBy: userId,
       });
       return toEpicDto(epic);
     },
 
-    async update(id, input) {
-      const epic = await repo.findById(id);
-      if (!epic) throw new NotFoundError('Epic not found.');
+    async update(id, input, userId) {
+      const epic = await ownedEpicOrThrow(id, userId);
 
       let nextTitle = epic.title;
       if (input.title !== undefined) {
@@ -110,9 +122,8 @@ export function createEpicService(dependencies: {
       return toEpicDto(updated);
     },
 
-    async remove(id) {
-      const epic = await repo.findById(id);
-      if (!epic) throw new NotFoundError('Epic not found.');
+    async remove(id, userId) {
+      await ownedEpicOrThrow(id, userId);
       if (await repo.isReferencedByTickets(id)) {
         throw new ConflictError(
           'Cannot delete an epic that is still referenced by tickets.',

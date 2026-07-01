@@ -1,15 +1,16 @@
 /**
- * Comment service unit tests (Phase 7). Business rules only — in-memory fakes
- * for the comment repo and ticket lookup. Covers ticket-existence (404),
- * non-empty body (400), and oldest-first listing. (The "adding a comment does
- * not bump the ticket" rule is structural: the service is given only a ticket
- * `findById`, so it cannot mutate a ticket.)
+ * Comment service unit tests (per-user ownership). In-memory fakes for the
+ * comment repo and ticket lookup. Covers ticket-ownership (404 for missing OR
+ * another user's ticket), non-empty body (400), and oldest-first listing.
  */
 import { describe, expect, it } from 'vitest';
 import { ApiError } from '../../lib/errors';
 import type { TicketRepository } from '../tickets/tickets.repo';
 import { createCommentService } from './comments.service';
 import type { CommentRecord, CommentRepository } from './comments.repo';
+
+const OWNER = 'user-1';
+const OTHER = 'user-2';
 
 function createFakeCommentRepo(): CommentRepository {
   const rows: CommentRecord[] = [];
@@ -35,10 +36,14 @@ function createFakeCommentRepo(): CommentRepository {
   };
 }
 
-function createFakeTickets(existingIds: string[]): Pick<TicketRepository, 'findById'> {
+// ticketId → owner id
+function createFakeTickets(
+  owners: Record<string, string>,
+): Pick<TicketRepository, 'findById'> {
   return {
     async findById(id) {
-      if (!existingIds.includes(id)) return null;
+      const createdBy = owners[id];
+      if (!createdBy) return null;
       const now = new Date(2026, 0, 1);
       return {
         id,
@@ -48,7 +53,7 @@ function createFakeTickets(existingIds: string[]): Pick<TicketRepository, 'findB
         epicId: null,
         title: 'T',
         body: 'B',
-        createdBy: 'user-1',
+        createdBy,
         createdAt: now,
         updatedAt: now,
       };
@@ -66,43 +71,54 @@ async function expectStatus(
 }
 
 describe('comment service', () => {
-  it('adds a comment to an existing ticket, keeping the body as sent', async () => {
+  it('adds a comment to the user\'s own ticket, keeping the body as sent', async () => {
     const service = createCommentService({
       repo: createFakeCommentRepo(),
-      tickets: createFakeTickets(['ticket-1']),
+      tickets: createFakeTickets({ 'ticket-1': OWNER }),
     });
-    const comment = await service.add('ticket-1', '  looks good  ', 'user-9');
+    const comment = await service.add('ticket-1', '  looks good  ', OWNER);
     expect(comment.ticketId).toBe('ticket-1');
-    expect(comment.authorId).toBe('user-9');
+    expect(comment.authorId).toBe(OWNER);
     expect(comment.body).toBe('  looks good  ');
   });
 
   it('rejects an empty/whitespace body (400)', async () => {
     const service = createCommentService({
       repo: createFakeCommentRepo(),
-      tickets: createFakeTickets(['ticket-1']),
+      tickets: createFakeTickets({ 'ticket-1': OWNER }),
     });
-    await expectStatus(service.add('ticket-1', '   ', 'user-1'), 400);
+    await expectStatus(service.add('ticket-1', '   ', OWNER), 400);
   });
 
   it('rejects add/list for a missing ticket (404)', async () => {
     const service = createCommentService({
       repo: createFakeCommentRepo(),
-      tickets: createFakeTickets([]),
+      tickets: createFakeTickets({}),
     });
-    await expectStatus(service.add('ghost', 'hi', 'user-1'), 404);
-    await expectStatus(service.list('ghost'), 404);
+    await expectStatus(service.add('ghost', 'hi', OWNER), 404);
+    await expectStatus(service.list('ghost', OWNER), 404);
+  });
+
+  it('rejects commenting on / listing another user\'s ticket (404)', async () => {
+    const service = createCommentService({
+      repo: createFakeCommentRepo(),
+      tickets: createFakeTickets({ 'ticket-1': OWNER }),
+    });
+    await expectStatus(service.add('ticket-1', 'sneaky', OTHER), 404);
+    await expectStatus(service.list('ticket-1', OTHER), 404);
   });
 
   it('lists comments oldest-first', async () => {
     const service = createCommentService({
       repo: createFakeCommentRepo(),
-      tickets: createFakeTickets(['ticket-1']),
+      tickets: createFakeTickets({ 'ticket-1': OWNER }),
     });
-    await service.add('ticket-1', 'first', 'user-1');
-    await service.add('ticket-1', 'second', 'user-1');
-    await service.add('ticket-1', 'third', 'user-1');
-    const bodies = (await service.list('ticket-1')).map((comment) => comment.body);
+    await service.add('ticket-1', 'first', OWNER);
+    await service.add('ticket-1', 'second', OWNER);
+    await service.add('ticket-1', 'third', OWNER);
+    const bodies = (await service.list('ticket-1', OWNER)).map(
+      (comment) => comment.body,
+    );
     expect(bodies).toEqual(['first', 'second', 'third']);
   });
 });

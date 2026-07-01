@@ -100,6 +100,11 @@ export const teams = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull(),
+    // Owner: data is isolated per user (deviation from REQUIREMENTS §4/§12 —
+    // see docs). A user only sees/manages the teams they created.
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -108,8 +113,13 @@ export const teams = pgTable(
       .defaultNow(),
   },
   (table) => [
-    // Team names are non-empty (service-enforced) and unique case-insensitively.
-    uniqueIndex('teams_name_lower_unique').on(sql`lower(${table.name})`),
+    // Team names are non-empty (service-enforced) and unique per owner, so two
+    // users can each have a team of the same name in their own workspace.
+    uniqueIndex('teams_owner_name_lower_unique').on(
+      table.createdBy,
+      sql`lower(${table.name})`,
+    ),
+    index('teams_created_by_idx').on(table.createdBy),
   ],
 );
 
@@ -125,6 +135,10 @@ export const epics = pgTable(
       .references(() => teams.id, { onDelete: 'restrict' }),
     title: text('title').notNull(),
     description: text('description'),
+    // Owner — epics are scoped to the user who created them (see teams note).
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -134,6 +148,7 @@ export const epics = pgTable(
   },
   (table) => [
     index('epics_team_idx').on(table.teamId),
+    index('epics_created_by_idx').on(table.createdBy),
     // Referenced by the tickets composite FK below (same-team enforcement).
     unique('epics_id_team_unique').on(table.id, table.teamId),
   ],
@@ -166,8 +181,13 @@ export const tickets = pgTable(
   },
   (table) => [
     index('tickets_team_idx').on(table.teamId),
-    // Board query is per-team, ordered/filtered by status — keep it fast at 100+.
-    index('tickets_team_status_idx').on(table.teamId, table.status),
+    // Board query is per-owner + per-team, ordered/filtered by status — keep it
+    // fast at 100+.
+    index('tickets_owner_team_status_idx').on(
+      table.createdBy,
+      table.teamId,
+      table.status,
+    ),
     index('tickets_epic_idx').on(table.epicId),
     // Composite FK: an epic reference must match an epic of the SAME team (§5, §6).
     // RESTRICT blocks deleting an epic still referenced by a ticket (→ 409).

@@ -64,11 +64,11 @@ function toTicketDto(ticket: TicketRecord): TicketDto {
 }
 
 export interface TicketService {
-  list(teamId?: string): Promise<TicketDto[]>;
-  get(id: string): Promise<TicketDto>;
-  create(input: CreateTicketInput, createdBy: string): Promise<TicketDto>;
-  update(id: string, patch: UpdateTicketInput): Promise<TicketDto>;
-  remove(id: string): Promise<void>;
+  list(userId: string, teamId?: string): Promise<TicketDto[]>;
+  get(id: string, userId: string): Promise<TicketDto>;
+  create(input: CreateTicketInput, userId: string): Promise<TicketDto>;
+  update(id: string, patch: UpdateTicketInput, userId: string): Promise<TicketDto>;
+  remove(id: string, userId: string): Promise<void>;
 }
 
 export function createTicketService(dependencies: {
@@ -78,37 +78,57 @@ export function createTicketService(dependencies: {
 }): TicketService {
   const { repo, teams, epics } = dependencies;
 
-  /** An epic referenced by a ticket must belong to the ticket's team (§5, §6). */
-  async function assertEpicInTeam(epicId: string, teamId: string): Promise<void> {
+  /** Fetch a ticket the user owns, or 404. */
+  async function ownedTicketOrThrow(id: string, userId: string) {
+    const ticket = await repo.findById(id);
+    if (!ticket || ticket.createdBy !== userId) {
+      throw new NotFoundError('Ticket not found.');
+    }
+    return ticket;
+  }
+
+  /** The team must exist and belong to this user. */
+  async function assertTeamOwned(teamId: string, userId: string): Promise<void> {
+    const team = await teams.findById(teamId);
+    if (!team || team.createdBy !== userId) {
+      throw new NotFoundError('Team not found.');
+    }
+  }
+
+  /** A referenced epic must be the user's own AND in the ticket's team (§5, §6). */
+  async function assertEpicInTeam(
+    epicId: string,
+    teamId: string,
+    userId: string,
+  ): Promise<void> {
     const epic = await epics.findById(epicId);
-    if (!epic) throw new NotFoundError('Epic not found.');
+    if (!epic || epic.createdBy !== userId) {
+      throw new NotFoundError('Epic not found.');
+    }
     if (epic.teamId !== teamId) {
       throw new ValidationError("Epic must belong to the ticket's team.");
     }
   }
 
   return {
-    async list(teamId) {
-      const rows = await repo.list(teamId);
+    async list(userId, teamId) {
+      const rows = await repo.list(userId, teamId);
       return rows.map(toTicketDto);
     },
 
-    async get(id) {
-      const ticket = await repo.findById(id);
-      if (!ticket) throw new NotFoundError('Ticket not found.');
-      return toTicketDto(ticket);
+    async get(id, userId) {
+      return toTicketDto(await ownedTicketOrThrow(id, userId));
     },
 
-    async create(input, createdBy) {
-      const team = await teams.findById(input.teamId);
-      if (!team) throw new NotFoundError('Team not found.');
+    async create(input, userId) {
+      await assertTeamOwned(input.teamId, userId);
 
       const title = input.title.trim();
       if (!title) throw new ValidationError('Title is required.');
       if (!input.body.trim()) throw new ValidationError('Body is required.');
 
       const epicId = input.epicId ?? null;
-      if (epicId) await assertEpicInTeam(epicId, input.teamId);
+      if (epicId) await assertEpicInTeam(epicId, input.teamId, userId);
 
       const ticket = await repo.insert({
         teamId: input.teamId,
@@ -117,25 +137,23 @@ export function createTicketService(dependencies: {
         epicId,
         title,
         body: input.body,
-        createdBy,
+        createdBy: userId,
       });
       return toTicketDto(ticket);
     },
 
-    async update(id, patch) {
-      const ticket = await repo.findById(id);
-      if (!ticket) throw new NotFoundError('Ticket not found.');
+    async update(id, patch, userId) {
+      const ticket = await ownedTicketOrThrow(id, userId);
 
       const nextTeamId = patch.teamId ?? ticket.teamId;
       if (patch.teamId !== undefined) {
-        const team = await teams.findById(patch.teamId);
-        if (!team) throw new NotFoundError('Team not found.');
+        await assertTeamOwned(patch.teamId, userId);
       }
 
       // Resolve the resulting epic and enforce same-team against the NEXT team.
       const nextEpicId =
         patch.epicId !== undefined ? patch.epicId : ticket.epicId;
-      if (nextEpicId) await assertEpicInTeam(nextEpicId, nextTeamId);
+      if (nextEpicId) await assertEpicInTeam(nextEpicId, nextTeamId, userId);
 
       const nextType = patch.type ?? ticket.type;
       const nextStatus = patch.status ?? ticket.status;
@@ -175,9 +193,8 @@ export function createTicketService(dependencies: {
       return toTicketDto(updated);
     },
 
-    async remove(id) {
-      const ticket = await repo.findById(id);
-      if (!ticket) throw new NotFoundError('Ticket not found.');
+    async remove(id, userId) {
+      await ownedTicketOrThrow(id, userId);
       await repo.remove(id); // comments cascade via the DB FK (§6)
     },
   };

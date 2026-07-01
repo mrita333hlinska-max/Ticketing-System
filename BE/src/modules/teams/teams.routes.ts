@@ -9,6 +9,7 @@
  *   DELETE /teams/:id     → 204           (409 if it has epics/tickets)
  */
 import { Router } from 'express';
+import { getUserId } from '../../http/middleware/requireAuth';
 import { parseBody } from '../../lib/validate';
 import { createTeamSchema, updateTeamSchema } from './teams.schema';
 import type { TeamService } from './teams.service';
@@ -16,22 +17,22 @@ import type { TeamService } from './teams.service';
 export function createTeamsRouter(service: TeamService): Router {
   const router = Router();
 
-  router.get('/', async (_request, response) => {
-    response.json(await service.list());
+  router.get('/', async (request, response) => {
+    response.json(await service.list(getUserId(request)));
   });
 
   router.post('/', async (request, response) => {
     const { name } = parseBody(createTeamSchema, request.body);
-    response.status(201).json(await service.create(name));
+    response.status(201).json(await service.create(name, getUserId(request)));
   });
 
   router.patch('/:id', async (request, response) => {
     const { name } = parseBody(updateTeamSchema, request.body);
-    response.json(await service.rename(request.params.id, name));
+    response.json(await service.rename(request.params.id, name, getUserId(request)));
   });
 
   router.delete('/:id', async (request, response) => {
-    await service.remove(request.params.id);
+    await service.remove(request.params.id, getUserId(request));
     response.status(204).end();
   });
 

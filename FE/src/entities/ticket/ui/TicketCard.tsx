@@ -1,7 +1,14 @@
-import { TYPE_LABELS, type Ticket } from '@/entities/ticket';
+import { TYPE_LABELS, type Ticket, type TicketType } from '@/entities/ticket';
 import { formatRelativeTime } from '@/shared/lib';
-import { Badge } from '@/shared/ui';
+import { Badge, type BadgeTone } from '@/shared/ui';
 import styles from './TicketCard.module.css';
+
+/** Ticket-type → badge colour (fix: green, feature: blue, bug: red). */
+const TYPE_TONE: Record<TicketType, BadgeTone> = {
+  fix: 'green',
+  feature: 'blue',
+  bug: 'red',
+};
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -25,7 +32,7 @@ export function TicketCard({ ticket, epicName, onOpen }: TicketCardProps) {
         }
       }}
     >
-      <Badge>{TYPE_LABELS[ticket.type]}</Badge>
+      <Badge tone={TYPE_TONE[ticket.type]}>{TYPE_LABELS[ticket.type]}</Badge>
       <h3 className={styles.title}>{ticket.title}</h3>
       {epicName && <p className={styles.epic}>Epic: {epicName}</p>}
       <time className={styles.time} dateTime={ticket.updatedAt}>

@@ -1,5 +1,5 @@
 /** Public API of shared/ui — generic, business-agnostic primitives. */
-export { Badge } from './Badge';
+export { Badge, type BadgeTone } from './Badge';
 export { Button } from './Button';
 export { Modal } from './Modal';
 export { Select, type SelectOption } from './Select';

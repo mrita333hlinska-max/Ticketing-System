@@ -19,11 +19,11 @@ export function createTicketsRouter(service: TicketService): Router {
   router.get('/', async (request, response) => {
     const { teamId } = request.query;
     const filter = typeof teamId === 'string' ? teamId : undefined;
-    response.json(await service.list(filter));
+    response.json(await service.list(getUserId(request), filter));
   });
 
   router.get('/:id', async (request, response) => {
-    response.json(await service.get(request.params.id));
+    response.json(await service.get(request.params.id, getUserId(request)));
   });
 
   router.post('/', async (request, response) => {
@@ -33,11 +33,11 @@ export function createTicketsRouter(service: TicketService): Router {
 
   router.patch('/:id', async (request, response) => {
     const patch = parseBody(updateTicketSchema, request.body);
-    response.json(await service.update(request.params.id, patch));
+    response.json(await service.update(request.params.id, patch, getUserId(request)));
   });
 
   router.delete('/:id', async (request, response) => {
-    await service.remove(request.params.id);
+    await service.remove(request.params.id, getUserId(request));
     response.status(204).end();
   });
 

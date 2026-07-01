@@ -20,7 +20,7 @@ export function createCommentsRouter(service: CommentService): Router {
 
   router.get('/', async (request, response) => {
     const { ticketId } = request.params as CommentParams;
-    response.json(await service.list(ticketId));
+    response.json(await service.list(ticketId, getUserId(request)));
   });
 
   router.post('/', async (request, response) => {

@@ -30,6 +30,16 @@ async function latestVerificationToken(): Promise<string> {
   return token;
 }
 
+/** Sign up, verify (via the stored token), and log in — returns a ready agent. */
+async function signUpVerifyLogin(email: string) {
+  const agent = request.agent(app);
+  const credentials = { email, password: 'password123' };
+  await agent.post('/api/auth/signup').send(credentials);
+  await agent.post('/api/auth/verify').send({ token: await latestVerificationToken() });
+  await agent.post('/api/auth/login').send(credentials);
+  return agent;
+}
+
 beforeEach(truncateAll);
 afterAll(async () => {
   await pool.end();
@@ -158,5 +168,38 @@ describe('business flow: signup → verify → login → team → epic → ticke
     });
     expect((await agent.delete(`/api/epics/${epicA.id}`)).status).toBe(409);
     expect((await agent.delete(`/api/teams/${teamA.id}`)).status).toBe(409);
+  });
+
+  it('isolates data per user: a new user sees nothing of another user\'s workspace', async () => {
+    // User A builds a workspace.
+    const alice = await signUpVerifyLogin('alice@example.com');
+    const team = (await alice.post('/api/teams').send({ name: 'Alice Team' })).body;
+    const ticket = (
+      await alice.post('/api/tickets').send({
+        teamId: team.id,
+        type: 'bug',
+        title: 'Alice ticket',
+        body: 'Body',
+        epicId: null,
+      })
+    ).body;
+
+    // A brand-new user B sees an empty workspace...
+    const bob = await signUpVerifyLogin('bob@example.com');
+    expect((await bob.get('/api/teams')).body).toEqual([]);
+    expect((await bob.get('/api/tickets')).body).toEqual([]);
+
+    // ...and cannot reach A's team or ticket by id (404, not 403 — hides existence).
+    expect((await bob.get(`/api/tickets/${ticket.id}`)).status).toBe(404);
+    expect(
+      (await bob.patch(`/api/tickets/${ticket.id}`).send({ status: 'done' })).status,
+    ).toBe(404);
+    expect((await bob.delete(`/api/teams/${team.id}`)).status).toBe(404);
+
+    // B can reuse the same team name (uniqueness is per-owner).
+    expect((await bob.post('/api/teams').send({ name: 'Alice Team' })).status).toBe(201);
+
+    // A still sees their own data intact.
+    expect((await alice.get('/api/teams')).body).toHaveLength(1);
   });
 });

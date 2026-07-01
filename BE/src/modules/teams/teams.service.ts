@@ -27,10 +27,10 @@ function toTeamDto(team: TeamRecord): TeamDto {
 }
 
 export interface TeamService {
-  list(): Promise<TeamDto[]>;
-  create(name: string): Promise<TeamDto>;
-  rename(id: string, name: string): Promise<TeamDto>;
-  remove(id: string): Promise<void>;
+  list(userId: string): Promise<TeamDto[]>;
+  create(name: string, userId: string): Promise<TeamDto>;
+  rename(id: string, name: string, userId: string): Promise<TeamDto>;
+  remove(id: string, userId: string): Promise<void>;
 }
 
 export function createTeamService(dependencies: {
@@ -38,28 +38,36 @@ export function createTeamService(dependencies: {
 }): TeamService {
   const { repo } = dependencies;
 
+  /** Fetch a team the user owns, or 404 (hides existence of others' data). */
+  async function ownedTeamOrThrow(id: string, userId: string) {
+    const team = await repo.findById(id);
+    if (!team || team.createdBy !== userId) {
+      throw new NotFoundError('Team not found.');
+    }
+    return team;
+  }
+
   return {
-    async list() {
-      const rows = await repo.list();
+    async list(userId) {
+      const rows = await repo.list(userId);
       return rows.map(toTeamDto);
     },
 
-    async create(rawName) {
+    async create(rawName, userId) {
       const name = rawName.trim();
       if (!name) throw new ValidationError('Team name is required.');
-      if (await repo.findByNameInsensitive(name)) {
+      if (await repo.findByNameInsensitive(userId, name)) {
         throw new ConflictError('A team with that name already exists.');
       }
-      return toTeamDto(await repo.insert(name));
+      return toTeamDto(await repo.insert(name, userId));
     },
 
-    async rename(id, rawName) {
-      const team = await repo.findById(id);
-      if (!team) throw new NotFoundError('Team not found.');
+    async rename(id, rawName, userId) {
+      const team = await ownedTeamOrThrow(id, userId);
 
       const name = rawName.trim();
       if (!name) throw new ValidationError('Team name is required.');
-      if (await repo.findByNameInsensitive(name, id)) {
+      if (await repo.findByNameInsensitive(userId, name, id)) {
         throw new ConflictError('A team with that name already exists.');
       }
 
@@ -68,9 +76,8 @@ export function createTeamService(dependencies: {
       return toTeamDto(await repo.updateName(id, name));
     },
 
-    async remove(id) {
-      const team = await repo.findById(id);
-      if (!team) throw new NotFoundError('Team not found.');
+    async remove(id, userId) {
+      await ownedTeamOrThrow(id, userId);
       if (await repo.hasReferences(id)) {
         throw new ConflictError(
           'Cannot delete a team that still has tickets or epics.',

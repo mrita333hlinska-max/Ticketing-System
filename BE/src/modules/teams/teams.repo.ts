@@ -9,14 +9,17 @@ import { epics, teams, tickets } from '../../db/schema';
 export type TeamRecord = typeof teams.$inferSelect;
 
 export interface TeamRepository {
-  list(): Promise<TeamRecord[]>;
+  /** Teams owned by `ownerId` (per-user isolation). */
+  list(ownerId: string): Promise<TeamRecord[]>;
   findById(id: string): Promise<TeamRecord | null>;
-  /** Case-insensitive name lookup, optionally excluding one id (for rename). */
+  /** Case-insensitive name lookup within one owner's teams (names are unique
+   * per owner), optionally excluding one id (for rename). */
   findByNameInsensitive(
+    ownerId: string,
     name: string,
     exceptId?: string,
   ): Promise<TeamRecord | null>;
-  insert(name: string): Promise<TeamRecord>;
+  insert(name: string, ownerId: string): Promise<TeamRecord>;
   updateName(id: string, name: string): Promise<TeamRecord>;
   remove(id: string): Promise<void>;
   /** True if any epic or ticket still references the team (§4 delete guard). */
@@ -25,8 +28,12 @@ export interface TeamRepository {
 
 export function createTeamRepository(db: Database): TeamRepository {
   return {
-    async list() {
-      return db.select().from(teams).orderBy(teams.createdAt);
+    async list(ownerId) {
+      return db
+        .select()
+        .from(teams)
+        .where(eq(teams.createdBy, ownerId))
+        .orderBy(teams.createdAt);
     },
 
     async findById(id) {
@@ -38,17 +45,21 @@ export function createTeamRepository(db: Database): TeamRepository {
       return rows[0] ?? null;
     },
 
-    async findByNameInsensitive(name, exceptId) {
-      const sameName = sql`lower(${teams.name}) = ${name.toLowerCase()}`;
-      const predicate = exceptId
-        ? and(sameName, ne(teams.id, exceptId))
-        : sameName;
+    async findByNameInsensitive(ownerId, name, exceptId) {
+      const sameName = and(
+        eq(teams.createdBy, ownerId),
+        sql`lower(${teams.name}) = ${name.toLowerCase()}`,
+      );
+      const predicate = exceptId ? and(sameName, ne(teams.id, exceptId)) : sameName;
       const rows = await db.select().from(teams).where(predicate).limit(1);
       return rows[0] ?? null;
     },
 
-    async insert(name) {
-      const rows = await db.insert(teams).values({ name }).returning();
+    async insert(name, ownerId) {
+      const rows = await db
+        .insert(teams)
+        .values({ name, createdBy: ownerId })
+        .returning();
       return rows[0];
     },
 

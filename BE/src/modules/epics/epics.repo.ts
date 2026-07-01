@@ -2,7 +2,7 @@
  * Persistence for epics (REQUIREMENTS §5). Interface + Drizzle factory so the
  * service can be unit-tested with an in-memory fake (PROJECT_RULES §2).
  */
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { Database } from '../../db/client';
 import { epics, tickets } from '../../db/schema';
 
@@ -12,6 +12,7 @@ export interface NewEpic {
   teamId: string;
   title: string;
   description: string | null;
+  createdBy: string;
 }
 
 export interface EpicUpdate {
@@ -20,7 +21,8 @@ export interface EpicUpdate {
 }
 
 export interface EpicRepository {
-  list(teamId?: string): Promise<EpicRecord[]>;
+  /** Epics owned by `ownerId`, optionally filtered to one team. */
+  list(ownerId: string, teamId?: string): Promise<EpicRecord[]>;
   findById(id: string): Promise<EpicRecord | null>;
   insert(input: NewEpic): Promise<EpicRecord>;
   update(id: string, values: EpicUpdate): Promise<EpicRecord>;
@@ -31,15 +33,11 @@ export interface EpicRepository {
 
 export function createEpicRepository(db: Database): EpicRepository {
   return {
-    async list(teamId) {
-      if (teamId) {
-        return db
-          .select()
-          .from(epics)
-          .where(eq(epics.teamId, teamId))
-          .orderBy(epics.createdAt);
-      }
-      return db.select().from(epics).orderBy(epics.createdAt);
+    async list(ownerId, teamId) {
+      const predicate = teamId
+        ? and(eq(epics.createdBy, ownerId), eq(epics.teamId, teamId))
+        : eq(epics.createdBy, ownerId);
+      return db.select().from(epics).where(predicate).orderBy(epics.createdAt);
     },
 
     async findById(id) {
@@ -58,6 +56,7 @@ export function createEpicRepository(db: Database): EpicRepository {
           teamId: input.teamId,
           title: input.title,
           description: input.description,
+          createdBy: input.createdBy,
         })
         .returning();
       return rows[0];
