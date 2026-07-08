@@ -1,10 +1,39 @@
+/*
+ * Each column derives its color from the ticket status. `data-status` sets two
+ * locals — --col (the solid state hue) and --col-soft (its tint) — and the rest
+ * of the column reads only those, so the "colorful squares" identity comes from
+ * one mapping. in_progress resolves to the brand orange (see index.css).
+ */
 .column {
   display: flex;
   flex-direction: column;
-  min-width: 240px;
+  min-width: 248px;
   flex: 1 1 0;
-  background: #f0f2f5;
-  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--col);
+  border-radius: var(--radius);
+}
+
+.column[data-status='new'] {
+  --col: var(--state-new);
+  --col-soft: var(--state-new-soft);
+}
+.column[data-status='ready_for_implementation'] {
+  --col: var(--state-ready_for_implementation);
+  --col-soft: var(--state-ready_for_implementation-soft);
+}
+.column[data-status='in_progress'] {
+  --col: var(--state-in_progress);
+  --col-soft: var(--state-in_progress-soft);
+}
+.column[data-status='ready_for_acceptance'] {
+  --col: var(--state-ready_for_acceptance);
+  --col-soft: var(--state-ready_for_acceptance-soft);
+}
+.column[data-status='done'] {
+  --col: var(--state-done);
+  --col-soft: var(--state-done-soft);
 }
 
 .header {
@@ -12,29 +41,54 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.75rem 0.85rem;
+  padding: 0.7rem 0.85rem;
+  /* Translucent tint of the state hue (fallback to the solid soft token). */
+  background: var(--col-soft);
+  background: color-mix(in srgb, var(--col) 14%, transparent);
+  border-bottom: 1px solid var(--line);
 }
 
 .label {
-  font-weight: 700;
-  font-size: 0.8rem;
-  letter-spacing: 0.03em;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #1f2933;
+  color: var(--ink);
+}
+
+/* Count chip in the state hue — mono, so it reads as data. */
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink);
+  /* Medium tint: darker than the header block (14%), still light enough that
+     the dark number reads clearly. Falls back to the solid hue. */
+  background: var(--col);
+  background: color-mix(in srgb, var(--col) 42%, transparent);
+  border-radius: var(--radius-sm);
 }
 
 .dropZone {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  padding: 0 0.6rem 0.75rem;
+  padding: 0.6rem;
   min-height: 120px;
   flex: 1;
-  border-radius: 6px;
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 
+/* Drop target glows in the column's own hue. */
 .dropOver {
-  outline: 2px dashed #7b8794;
+  outline: 2px dashed var(--col);
   outline-offset: -4px;
-  background: #e4e7eb;
+  background: var(--col-soft);
 }

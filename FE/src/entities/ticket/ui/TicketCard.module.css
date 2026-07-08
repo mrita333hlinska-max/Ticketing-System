@@ -2,37 +2,52 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  background: #ffffff;
-  border: 1px solid #cbd2d9;
-  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
   padding: 0.85rem;
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
 }
 
 .card:hover {
-  border-color: #9aa5b1;
+  border-color: var(--ink-3);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .card:focus-visible {
-  outline: 2px solid #1f2933;
-  outline-offset: 1px;
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Keep the type tag hugging its text instead of stretching the card width. */
+.typeBadge {
+  align-self: flex-start;
 }
 
 .title {
   margin: 0;
+  font-family: var(--font-body);
   font-size: 0.95rem;
-  font-weight: 700;
-  color: #1f2933;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
 }
 
 .epic {
   margin: 0;
   font-size: 0.8rem;
-  color: #616e7c;
+  color: var(--ink-2);
 }
 
 .time {
   align-self: flex-end;
-  font-size: 0.75rem;
-  color: #9aa5b1;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-3);
 }

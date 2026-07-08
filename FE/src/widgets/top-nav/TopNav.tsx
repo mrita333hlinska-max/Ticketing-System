@@ -20,7 +20,10 @@ export function TopNav() {
 
   return (
     <header className={styles.bar}>
-      <div className={styles.brand}>TICKET TRACKER</div>
+      <div className={styles.brand}>
+        <span aria-hidden="true" className={styles.mark} />
+        Ticket Tracker
+      </div>
 
       <nav className={styles.tabs} aria-label="Primary">
         {TABS.map((tab) => (

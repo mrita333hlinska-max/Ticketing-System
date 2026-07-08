@@ -2,35 +2,33 @@
   display: inline-flex;
   align-items: center;
   padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  background: #e4e7eb;
-  color: #3e4c59;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  border-radius: var(--radius-sm);
+  background: var(--line);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
 .muted {
-  background: #cbd2d9;
-  color: #1f2933;
+  background: var(--line-strong);
+  color: var(--ink);
 }
 
 /* Categorised tones — defined after .badge so they win on equal specificity. */
 .green {
-  /* pistachio green */
-  background: #dcefc7;
-  color: #3f6b1e;
+  background: var(--success-soft);
+  color: var(--success-text);
 }
 
 .blue {
-  /* light ice blue */
-  background: #d8edf8;
-  color: #0b6a8f;
+  background: var(--state-ready_for_implementation-soft);
+  color: var(--state-ready_for_implementation);
 }
 
 .red {
-  /* coral red */
-  background: #ffd8d0;
-  color: #b23a2e;
+  background: var(--danger-soft);
+  color: var(--danger-text);
 }

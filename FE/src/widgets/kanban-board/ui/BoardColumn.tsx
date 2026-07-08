@@ -6,7 +6,6 @@ import {
   type TicketStatus,
 } from '@/entities/ticket';
 import { classNames } from '@/shared/lib';
-import { Badge } from '@/shared/ui';
 import styles from './BoardColumn.module.css';
 
 interface DragHandlers {
@@ -41,10 +40,14 @@ export function BoardColumn({
   onOpenTicket,
 }: BoardColumnProps) {
   return (
-    <section className={styles.column} aria-label={STATUS_LABELS[status]}>
+    <section
+      className={styles.column}
+      data-status={status}
+      aria-label={STATUS_LABELS[status]}
+    >
       <header className={styles.header}>
         <span className={styles.label}>{STATUS_LABELS[status]}</span>
-        <Badge muted>{tickets.length}</Badge>
+        <span className={styles.count}>{tickets.length}</span>
       </header>
 
       <div

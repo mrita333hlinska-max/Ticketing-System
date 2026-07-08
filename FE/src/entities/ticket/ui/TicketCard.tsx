@@ -32,7 +32,9 @@ export function TicketCard({ ticket, epicName, onOpen }: TicketCardProps) {
         }
       }}
     >
-      <Badge tone={TYPE_TONE[ticket.type]}>{TYPE_LABELS[ticket.type]}</Badge>
+      <Badge tone={TYPE_TONE[ticket.type]} className={styles.typeBadge}>
+        {TYPE_LABELS[ticket.type]}
+      </Badge>
       <h3 className={styles.title}>{ticket.title}</h3>
       {epicName && <p className={styles.epic}>Epic: {epicName}</p>}
       <time className={styles.time} dateTime={ticket.updatedAt}>

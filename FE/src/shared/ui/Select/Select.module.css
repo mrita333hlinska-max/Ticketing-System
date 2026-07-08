@@ -7,28 +7,30 @@
 .label {
   font-weight: 600;
   font-size: 0.85rem;
-  color: #3e4c59;
+  color: var(--ink-2);
 }
 
 .select {
   font: inherit;
   /* Extra right padding leaves a gap before the custom chevron. */
   padding: 0.55rem 2rem 0.55rem 0.7rem;
-  border: 1px solid #cbd2d9;
-  border-radius: 6px;
-  background-color: #ffffff;
-  color: #1f2933;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--ink);
   cursor: pointer;
 
-  /* Replace the native arrow so we control the gap to the edge consistently. */
+  /* Replace the native arrow so we control the gap to the edge consistently.
+     Chevron stroke is --ink-3 (#7d8486); data URIs can't read CSS vars. */
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23616e7c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%237d8486' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.7rem center;
 }
 
 .select:focus {
-  outline: 2px solid #1f2933;
-  outline-offset: -1px;
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: var(--ring);
 }

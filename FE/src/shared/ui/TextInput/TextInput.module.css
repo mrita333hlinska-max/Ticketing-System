@@ -7,29 +7,30 @@
 .label {
   font-weight: 600;
   font-size: 0.85rem;
-  color: #3e4c59;
+  color: var(--ink-2);
 }
 
 .input {
   font: inherit;
   padding: 0.55rem 0.7rem;
-  border: 1px solid #cbd2d9;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #1f2933;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
 }
 
 .input:focus {
-  outline: 2px solid #1f2933;
-  outline-offset: -1px;
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: var(--ring);
 }
 
 .invalid {
-  border-color: #cf1124;
+  border-color: var(--danger);
 }
 
 .error {
   margin: 0;
   font-size: 0.8rem;
-  color: #cf1124;
+  color: var(--danger-text);
 }

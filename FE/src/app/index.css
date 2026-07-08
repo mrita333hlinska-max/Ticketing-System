@@ -1,8 +1,73 @@
+/*
+ * Design tokens — single source of truth for the whole app.
+ * Identity: DataArt (post-rebrand) — signature orange on near-black, a
+ * deliberately colorful state palette, squared corners, sans-serif type.
+ * Components reference these vars; no component should hardcode a brand hex.
+ */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Type ------------------------------------------------------------------ */
+  --font-display:
+    'Roboto', system-ui, Arial, sans-serif; /* headings, wordmark */
+  --font-body: 'Roboto', system-ui, Arial, Helvetica, sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Brand — DataArt orange ------------------------------------------------ */
+  --brand: #f39200; /* signature: primary actions, focus, active nav */
+  --brand-strong: #d97e00; /* hover / pressed */
+  --brand-soft: #fff3e0; /* tint surface */
+  --brand-text: #a85f00; /* orange text that still passes contrast on white */
+  --on-brand: #0f161a; /* text/icons ON an orange fill (dark, per DataArt) */
+
+  /* Neutrals — DataArt cool grays ---------------------------------------- */
+  --ink: #0f161a; /* primary text, near-black */
+  --ink-2: #3a4248; /* secondary text */
+  --ink-3: #7d8486; /* tertiary / captions */
+  --line: #e2e6e9; /* hairline borders */
+  --line-strong: #cbd2d9; /* input borders, dividers */
+  --surface: #ffffff; /* cards, dialogs, bars */
+  --surface-2: #f4f6f7; /* insets, column bodies */
+  --bg: #eef1f3; /* app background */
+
+  /* Semantic -------------------------------------------------------------- */
+  --success: #2f9e44; /* green accent (done / success) */
+  --success-soft: #e7f5ea;
+  --success-text: #1f6b2e;
+  --danger: #e5484d; /* DataArt coral-red */
+  --danger-soft: #fdeceb;
+  --danger-text: #b23a2e;
+
+  /* Workflow-state hues — the "colorful squares" of the board ------------- *
+   * new → queued → active → review → done, as a meaningful color arc:
+   * gray (idle) · blue (queued) · ORANGE (active, = brand) · purple (review)
+   * · green (done). in_progress carries the signature color on purpose.     */
+  --state-new: #7d8486;
+  --state-new-soft: #eef0f1;
+  --state-ready_for_implementation: #3453ad;
+  --state-ready_for_implementation-soft: #e8ecf8;
+  --state-in_progress: var(--brand);
+  --state-in_progress-soft: var(--brand-soft);
+  --state-ready_for_acceptance: #70529f;
+  --state-ready_for_acceptance-soft: #efeaf6;
+  --state-done: var(--success);
+  --state-done-soft: var(--success-soft);
+
+  /* Shape & depth — squared, per the DataArt rebrand ---------------------- */
+  --radius-sm: 2px;
+  --radius: 3px;
+  --radius-lg: 6px;
+  --shadow-sm: 0 1px 2px rgb(15 22 26 / 0.06);
+  --shadow-md: 0 4px 12px rgb(15 22 26 / 0.1);
+  --shadow-lg: 0 12px 32px rgb(15 22 26 / 0.18);
+
+  /* Focus ring — brand orange, one consistent treatment everywhere -------- */
+  --ring: 0 0 0 3px rgb(243 146 0 / 0.4);
+
+  font-family: var(--font-body);
   line-height: 1.5;
-  color: #1f2933;
-  background-color: #f5f7fa;
+  color: var(--ink);
+  background-color: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 * {
@@ -12,4 +77,35 @@
 body {
   margin: 0;
   min-height: 100vh;
+}
+
+/* Headings default to the squared display face. */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+/* One focus treatment for the whole app: a brand-orange ring. */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
