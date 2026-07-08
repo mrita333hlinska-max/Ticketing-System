@@ -44,6 +44,12 @@ export function CreateTicketDialog({
   const [epicId, setEpicId] = useState<string>(NO_EPIC);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [triedSubmit, setTriedSubmit] = useState(false);
+
+  // After a failed submit, flag the empty required fields; the red clears
+  // itself as soon as the field has content.
+  const titleInvalid = triedSubmit && !title.trim();
+  const bodyInvalid = triedSubmit && !body.trim();
 
   const epicOptions: SelectOption[] = [
     { value: NO_EPIC, label: 'No epic' },
@@ -53,7 +59,8 @@ export function CreateTicketDialog({
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!title.trim() || !body.trim()) {
-      setError('Title and body are required.');
+      setTriedSubmit(true);
+      setError(null);
       return;
     }
     setSubmitting(true);
@@ -91,6 +98,7 @@ export function CreateTicketDialog({
           placeholder="Short summary of the issue"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
+          invalid={titleInvalid}
           autoFocus
         />
         <TextArea
@@ -98,6 +106,7 @@ export function CreateTicketDialog({
           placeholder="Describe the problem or request…"
           value={body}
           onChange={(event) => setBody(event.target.value)}
+          invalid={bodyInvalid}
         />
         <Select
           label="Epic (optional)"
@@ -106,6 +115,9 @@ export function CreateTicketDialog({
           onChange={(event) => setEpicId(event.target.value)}
         />
 
+        {(titleInvalid || bodyInvalid) && (
+          <p className={styles.error}>Title and body are required.</p>
+        )}
         {error && <p className={styles.error}>{error}</p>}
 
         <div className={styles.actions}>
