@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 import styles from './Modal.module.css';
 
@@ -17,7 +18,10 @@ export function Modal({ title, onClose, children }: ModalProps) {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [onClose]);
 
-  return (
+  // Rendered through a portal to <body> so the fixed backdrop always covers
+  // and blocks the whole page, free of any ancestor's overflow/transform/
+  // stacking context.
+  return createPortal(
     <div className={styles.backdrop} onClick={onClose}>
       <div
         className={styles.dialog}
@@ -39,6 +43,7 @@ export function Modal({ title, onClose, children }: ModalProps) {
         </header>
         <div className={styles.body}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

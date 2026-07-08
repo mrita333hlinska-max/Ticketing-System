@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, TextInput } from '@/shared/ui';
+import { Button, Modal, TextInput } from '@/shared/ui';
 import styles from './TeamFormPanel.module.css';
 
 interface TeamFormPanelProps {
@@ -30,26 +30,28 @@ export function TeamFormPanel({
   }
 
   return (
-    <form className={styles.panel} onSubmit={handleSubmit}>
-      <h2 className={styles.title}>
-        {mode === 'edit' ? 'Edit team' : 'Create team'}
-      </h2>
-      <TextInput
-        label="Team name"
-        placeholder="e.g. Platform Engineering"
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        error={error ?? undefined}
-        autoFocus
-      />
-      <div className={styles.actions}>
-        <Button variant="secondary" onClick={onCancel} disabled={submitting}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={submitting || !name.trim()}>
-          {mode === 'edit' ? 'Save' : 'Create'}
-        </Button>
-      </div>
-    </form>
+    <Modal
+      title={mode === 'edit' ? 'Edit team' : 'Create team'}
+      onClose={onCancel}
+    >
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <TextInput
+          label="Team name"
+          placeholder="e.g. Platform Engineering"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          error={error ?? undefined}
+          autoFocus
+        />
+        <div className={styles.actions}>
+          <Button variant="secondary" onClick={onCancel} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={submitting || !name.trim()}>
+            {mode === 'edit' ? 'Save' : 'Create'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

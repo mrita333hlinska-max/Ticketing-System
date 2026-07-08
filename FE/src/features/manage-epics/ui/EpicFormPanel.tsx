@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, TextArea, TextInput } from '@/shared/ui';
+import { Button, Modal, TextArea, TextInput } from '@/shared/ui';
 import styles from './EpicFormPanel.module.css';
 
 interface EpicFormPanelProps {
@@ -33,33 +33,35 @@ export function EpicFormPanel({
   }
 
   return (
-    <form className={styles.panel} onSubmit={handleSubmit}>
-      <h2 className={styles.title}>
-        {mode === 'edit' ? 'Edit epic' : 'Create epic'}
-      </h2>
-      <TextInput
-        label="Title"
-        placeholder="e.g. Checkout reliability"
-        value={title}
-        onChange={(event) => setTitle(event.target.value)}
-        error={error ?? undefined}
-        autoFocus
-      />
-      <TextArea
-        label="Description (optional)"
-        rows={3}
-        placeholder="Short optional description…"
-        value={description}
-        onChange={(event) => setDescription(event.target.value)}
-      />
-      <div className={styles.actions}>
-        <Button variant="secondary" onClick={onCancel} disabled={submitting}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={submitting || !title.trim()}>
-          {mode === 'edit' ? 'Save' : 'Create'}
-        </Button>
-      </div>
-    </form>
+    <Modal
+      title={mode === 'edit' ? 'Edit epic' : 'Create epic'}
+      onClose={onCancel}
+    >
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <TextInput
+          label="Title"
+          placeholder="e.g. Checkout reliability"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          error={error ?? undefined}
+          autoFocus
+        />
+        <TextArea
+          label="Description (optional)"
+          rows={3}
+          placeholder="Short optional description…"
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+        />
+        <div className={styles.actions}>
+          <Button variant="secondary" onClick={onCancel} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={submitting || !title.trim()}>
+            {mode === 'edit' ? 'Save' : 'Create'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
