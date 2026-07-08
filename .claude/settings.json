@@ -2,6 +2,8 @@
   "permissions": {
     "allow": [
       "mcp__playwright",
+      "mcp__postgres",
+      "mcp__context7",
       "Bash(npm install)",
       "Bash(npm run dev:*)",
       "Bash(npm run build:*)",

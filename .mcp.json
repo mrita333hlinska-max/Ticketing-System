@@ -1,21 +1,23 @@
 {
   "mcpServers": {
     "playwright": {
+      "type": "stdio",
       "command": "npx",
       "args": ["@playwright/mcp@latest"]
     },
     "context7": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"],
-      "env": {
-        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY:-}"
-      }
+      "args": ["-y", "@upstash/context7-mcp"]
     },
     "postgres": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgres://postgres:postgres@127.0.0.1:5432/ticketing"
+      ]
     }
   }
 }
