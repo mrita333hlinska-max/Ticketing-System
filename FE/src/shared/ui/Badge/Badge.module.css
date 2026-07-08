@@ -12,11 +12,6 @@
   text-transform: uppercase;
 }
 
-.muted {
-  background: var(--line-strong);
-  color: var(--ink);
-}
-
 /* Categorised tones — defined after .badge so they win on equal specificity. */
 .green {
   background: var(--success-soft);

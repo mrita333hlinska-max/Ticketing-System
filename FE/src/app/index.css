@@ -15,7 +15,6 @@
   --brand: #f39200; /* signature: primary actions, focus, active nav */
   --brand-strong: #d97e00; /* hover / pressed */
   --brand-soft: #fff3e0; /* tint surface */
-  --brand-text: #a85f00; /* orange text that still passes contrast on white */
   --on-brand: #0f161a; /* text/icons ON an orange fill (dark, per DataArt) */
 
   /* Neutrals — DataArt cool grays ---------------------------------------- */
